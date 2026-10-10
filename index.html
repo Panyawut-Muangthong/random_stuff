@@ -1,952 +1,1696 @@
 <!DOCTYPE html>
 <html lang="th">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Pokémon Sightless Catcher</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Sarabun', sans-serif;
-            background-color: #0f172a; /* bg-slate-900 */
-            color: #f8fafc; /* text-slate-50 */
-            margin: 0;
-            padding: 0;
-            display: flex;
-            justify-content: center;
-            min-height: 100vh;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Monster Quest - เกมจับสัตว์เลี้ยงมินิมอล</title>
+  <style>
+    /* Reset & Base Fonts */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      -webkit-font-smoothing: antialiased;
+      -webkit-tap-highlight-color: transparent;
+    }
 
-        /* Focus rings for Accessibility */
-        *:focus-visible {
-            outline: 4px solid #38bdf8;
-            outline-offset: 2px;
-            border-radius: 4px;
-        }
+    html, body {
+      width: 100%;
+      height: 100%;
+    }
 
-        /* Custom Radio Button styling for Inventory */
-        .ball-radio {
-            display: none;
-        }
+    body {
+      background-color: #0b0f19;
+      color: #f3f4f6;
+      min-height: 100vh;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      padding: 16px;
+      touch-action: manipulation;
+    }
 
-        .ball-label {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 0.75rem;
-            border-radius: 0.75rem; /* rounded-xl */
-            border: 2px solid #334155; /* border-slate-700 */
-            background-color: #1e293b; /* bg-slate-800 */
-            cursor: pointer;
-            transition: all 0.2s;
-            height: 100%;
-        }
+    /* Main Console / Container */
+    .game-container {
+      width: 100%;
+      max-width: 480px;
+      background: #111827;
+      border: 3px solid #374151;
+      border-radius: 10px;
+      box-shadow: 6px 6px 0px #030712;
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
 
-        .ball-radio:checked + .ball-label {
-            border-color: #f59e0b; /* border-amber-500 / orange */
-            background-color: rgba(245, 158, 11, 0.1);
-            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
-        }
+    /* Header Bar: Status & Money */
+    .status-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 14px;
+      border: 2px solid #374151;
+      background-color: #1f2937;
+      border-radius: 6px;
+      font-weight: 700;
+      font-size: 0.95rem;
+      color: #e5e7eb;
+    }
 
-        .ball-radio:disabled + .ball-label {
-            opacity: 0.5;
-            cursor: not-allowed;
-            border-color: #ef4444 !important;
-        }
+    .status-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
 
-        /* Custom Modal Animation */
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
-            to { opacity: 1; transform: translateY(0) scale(1); }
-        }
-        .modal-animate {
-            animation: fadeIn 0.3s ease-out forwards;
-        }
+    .badge-money {
+      color: #fbbf24;
+      background: #3b2506;
+      padding: 2px 8px;
+      border: 1.5px solid #d97706;
+      border-radius: 4px;
+      font-weight: 800;
+    }
 
-        /* Avatar pulse */
-        @keyframes gentlePulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
-        }
-        .avatar-pulse {
-            animation: gentlePulse 3s infinite;
-        }
-    </style>
+    /* Screen Area */
+    .screen-area {
+      border: 2px solid #374151;
+      border-radius: 6px;
+      padding: 16px;
+      min-height: 175px;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      background-color: #151d2f;
+      text-align: center;
+    }
+
+    .screen-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      margin-bottom: 12px;
+      letter-spacing: 0.5px;
+      color: #f9fafb;
+    }
+
+    .content-box {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #9ca3af;
+      padding: 12px;
+      background-color: #0e1524;
+      border: 1.5px dashed #4b5563;
+      border-radius: 6px;
+    }
+
+    /* Message Alert / Feedback */
+    .alert-banner {
+      margin-top: 10px;
+      padding: 8px 10px;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      font-weight: 600;
+    }
+    .alert-banner.success {
+      background-color: #064e3b;
+      color: #a7f3d0;
+      border: 1px solid #059669;
+    }
+    .alert-banner.error {
+      background-color: #7f1d1d;
+      color: #fecaca;
+      border: 1px solid #dc2626;
+    }
+
+    /* Action & Menu Groups */
+    .view-panel {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    /* Button Styling */
+    .btn {
+      width: 100%;
+      padding: 13px 16px;
+      font-size: 1rem;
+      font-weight: 700;
+      color: #f3f4f6;
+      background-color: #1f2937;
+      border: 2px solid #374151;
+      border-radius: 6px;
+      box-shadow: 3px 3px 0px #030712;
+      cursor: pointer;
+      text-align: left;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: transform 0.05s ease, box-shadow 0.05s ease, background-color 0.1s;
+      user-select: none;
+    }
+
+    .btn:hover:not(:disabled) {
+      background-color: #283548;
+      border-color: #4b5563;
+    }
+
+    .btn:active:not(:disabled) {
+      transform: translate(2px, 2px);
+      box-shadow: 1px 1px 0px #030712;
+    }
+
+    .btn:disabled {
+      background-color: #131924;
+      color: #4b5563;
+      border-color: #27303f;
+      box-shadow: none;
+      cursor: not-allowed;
+    }
+
+    .btn-secondary {
+      text-align: center;
+      justify-content: center;
+      background-color: #1a2233;
+      border-color: #374151;
+    }
+
+    .btn-secondary:hover:not(:disabled) {
+      background-color: #242f46;
+    }
+
+    .btn-tag {
+      font-size: 0.8rem;
+      font-weight: normal;
+      background-color: #0b1120;
+      color: #64748b;
+      padding: 2px 7px;
+      border-radius: 4px;
+      border: 1px solid #1e293b;
+    }
+
+    /* Shop Item Details */
+    .shop-item-info {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      text-align: left;
+    }
+
+    .shop-item-name {
+      font-size: 0.98rem;
+      font-weight: 700;
+      color: #f9fafb;
+    }
+
+    .shop-item-sub {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      font-weight: normal;
+    }
+
+    .shop-price-tag {
+      background-color: #3b2506;
+      color: #fbbf24;
+      border: 1.5px solid #d97706;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-size: 0.88rem;
+      font-weight: 800;
+      white-space: nowrap;
+    }
+
+    /* Pet Inventory List */
+    .inventory-scroll {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      max-height: 290px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .inventory-scroll::-webkit-scrollbar {
+      width: 5px;
+    }
+
+    .inventory-scroll::-webkit-scrollbar-thumb {
+      background: #374151;
+      border-radius: 4px;
+    }
+
+    .pet-card {
+      background-color: #151d2f;
+      border: 2px solid #374151;
+      border-radius: 6px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      box-shadow: 2px 2px 0px #030712;
+    }
+
+    .pet-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      text-align: left;
+    }
+
+    .pet-name-line {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.98rem;
+      font-weight: 800;
+      color: #f9fafb;
+    }
+
+    .pet-stat-line {
+      font-size: 0.85rem;
+      color: #9ca3af;
+      line-height: 1.45;
+    }
+
+    .pet-action-row {
+      display: flex;
+      gap: 8px;
+      margin-top: 4px;
+      align-items: center;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .btn-feed {
+      background-color: #065f46;
+      color: #d1fae5;
+      border: 1.5px solid #10b981;
+      border-radius: 4px;
+      padding: 6px 11px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 2px 2px 0px #030712;
+      transition: transform 0.05s ease, background-color 0.1s;
+    }
+
+    .btn-feed:hover {
+      background-color: #047857;
+      color: #ffffff;
+    }
+
+    .btn-feed:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px #030712;
+    }
+
+    .btn-sell {
+      background-color: #7f1d1d;
+      color: #fecaca;
+      border: 1.5px solid #b91c1c;
+      border-radius: 4px;
+      padding: 6px 11px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 2px 2px 0px #030712;
+      transition: transform 0.05s ease, background-color 0.1s;
+    }
+
+    .btn-sell:hover {
+      background-color: #991b1b;
+      color: #ffffff;
+    }
+
+    .btn-sell:active {
+      transform: translate(1px, 1px);
+      box-shadow: 1px 1px 0px #030712;
+    }
+
+    .btn-choose-champ {
+      background-color: #7c2d12;
+      color: #ffedd5;
+      border: 1.5px solid #ea580c;
+      border-radius: 4px;
+      padding: 6px 12px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      cursor: pointer;
+      white-space: nowrap;
+      box-shadow: 2px 2px 0px #030712;
+    }
+
+    .btn-choose-champ:hover {
+      background-color: #9a3412;
+    }
+
+    /* Wild Encounter & Catch Area Styling */
+    .ball-summary-bar {
+      display: flex;
+      justify-content: space-between;
+      background-color: #0e1524;
+      border: 1.5px solid #374151;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 0.84rem;
+      color: #94a3b8;
+    }
+
+    .ball-summary-bar span {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .ball-count-val {
+      color: #38bdf8;
+      font-weight: 800;
+    }
+
+    .btn-catch-action {
+      background-color: #1e3a8a;
+      border-color: #3b82f6;
+    }
+
+    .btn-catch-action:hover:not(:disabled) {
+      background-color: #1d4ed8;
+      border-color: #60a5fa;
+    }
+
+    .btn-search-wild {
+      background-color: #064e3b;
+      border-color: #059669;
+      text-align: center;
+      justify-content: center;
+      font-size: 1.05rem;
+    }
+
+    .btn-search-wild:hover:not(:disabled) {
+      background-color: #047857;
+    }
+
+    /* Matchmaking & Duel Box Styling */
+    .matchmaking-card {
+      background-color: #0e1524;
+      border: 2px dashed #3b82f6;
+      border-radius: 8px;
+      padding: 16px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .pulse-text {
+      color: #60a5fa;
+      font-weight: 800;
+      font-size: 1.05rem;
+      animation: pulse 1.4s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    .vs-match-card {
+      background-color: #1a2338;
+      border: 2px solid #ea580c;
+      border-radius: 8px;
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      text-align: center;
+    }
+
+    .vs-duelists {
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      padding: 6px 0;
+    }
+
+    .duelist-col {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex: 1;
+      text-align: center;
+    }
+
+    .duelist-trainer {
+      font-size: 0.85rem;
+      color: #f97316;
+      font-weight: 800;
+    }
+
+    .duelist-pet {
+      font-size: 0.95rem;
+      color: #f3f4f6;
+      font-weight: 700;
+    }
+
+    .vs-badge {
+      font-size: 1.25rem;
+      font-weight: 900;
+      color: #f97316;
+      padding: 0 8px;
+    }
+
+    .btn-arena-start {
+      background-color: #991b1b;
+      border-color: #ef4444;
+      text-align: center;
+      justify-content: center;
+      font-size: 1.05rem;
+    }
+
+    .btn-arena-start:hover:not(:disabled) {
+      background-color: #b91c1c;
+    }
+
+    /* Footer / Back Button */
+    .footer-bar {
+      margin-top: 2px;
+    }
+
+    /* Mobile Fullscreen (แสดงผลเต็มจอเมื่อเปิดบนมือถือ) */
+    @media (max-width: 600px) {
+      body {
+        padding: 0;
+        align-items: stretch;
+      }
+
+      .game-container {
+        max-width: 100%;
+        min-height: 100vh;
+        min-height: 100dvh;
+        border-radius: 0;
+        border: none;
+        box-shadow: none;
+        padding: 14px 14px calc(14px + env(safe-area-inset-bottom, 0px));
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .screen-area {
+        flex: 1;
+        min-height: 140px;
+      }
+
+      .inventory-scroll {
+        max-height: 48vh;
+      }
+
+      .btn {
+        padding: 12px 14px;
+      }
+    }
+  </style>
 </head>
-<body class="p-4 md:p-8">
+<body>
 
-    <main class="w-full max-w-xl flex flex-col gap-4 pb-12" aria-live="polite" id="game-container">
-        
-        <!-- Top Navigation / Resource Bar -->
-        <div class="flex items-center justify-between border border-slate-700 rounded-2xl bg-slate-800/80 px-4 py-3 shadow-md">
-            <div class="flex items-center gap-2">
-                <span class="text-amber-400 font-bold text-lg flex items-center gap-1">
-                    🪙 <span id="player-coins">100</span> เหรียญ
-                </span>
-            </div>
-            <div class="flex items-center gap-2">
-                <button id="btn-open-shop" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs md:text-sm transition-transform active:scale-95 flex items-center gap-1.5 shadow">
-                    🏪 ร้านค้าซื้อบอล
-                </button>
-                <button id="btn-open-bag" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs md:text-sm transition-transform active:scale-95 flex items-center gap-1.5 shadow">
-                    🎒 คลัง (<span id="bag-count">0</span>)
-                </button>
-            </div>
-        </div>
+  <div class="game-container">
+    <!-- แถบสถานะข้อมูลผู้เล่น -->
+    <header class="status-bar">
+      <div class="status-item">
+        <span>กระเป๋า:</span>
+        <span id="ball-count">บอล: 0</span> |
+        <span id="food-count">อาหาร: 0</span>
+      </div>
+      <div class="status-item">
+        <span>เหรียญ:</span>
+        <span class="badge-money" id="player-money">1,000 G</span>
+      </div>
+    </header>
 
-        <!-- Header & TTS Block -->
-        <div class="border border-slate-700 rounded-2xl bg-slate-800/50 p-4 shadow-md">
-            <h1 class="text-xl font-bold flex items-center justify-center gap-2 text-yellow-500 mb-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
-                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                </svg>
-                โปเกมอน ซาวด์แคชเชอร์
-            </h1>
-            <p id="tts-system-message" class="text-slate-300 text-sm md:text-base text-center leading-relaxed">
-                กำลังค้นหาโปเกมอนป่า...
-            </p>
-        </div>
-
-        <!-- Main Encounter Display -->
-        <section id="encounter-section" class="bg-slate-800 border border-slate-700 rounded-3xl p-6 flex flex-col items-center shadow-lg relative">
-            <!-- Circular Avatar -->
-            <div class="relative mb-3 avatar-pulse">
-                <div class="w-24 h-24 rounded-full border-4 border-emerald-700 bg-slate-900 flex items-center justify-center relative z-10" id="pokemon-icon-container">
-                    <!-- Bug Icon default -->
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-lime-500" viewBox="0 0 24 24" fill="currentColor" id="pokemon-svg">
-                        <path d="M8 9a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm-4-3a5.006 5.006 0 0 0-4.9 4H5a1 1 0 0 0 0 2h1.27a4.975 4.975 0 0 0 0 2H5a1 1 0 0 0 0 2h2.2a5 5 0 0 0 9.6 0H19a1 1 0 0 0 0-2h-1.27a4.975 4.975 0 0 0 0-2H19a1 1 0 0 0 0-2h-1.1A5.006 5.006 0 0 0 12 6zm0 10a3 3 0 1 1 3-3 3 3 0 0 1-3 3z"/>
-                    </svg>
-                </div>
-                <div id="encounter-status-badge" class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap">
-                    พบแล้ว!
-                </div>
-            </div>
-
-            <!-- Level Badge -->
-            <div id="pokemon-level-badge" class="bg-purple-900 text-purple-200 text-xs font-bold px-4 py-1 rounded-full mb-2 border border-purple-700">
-                เลเวล: 1
-            </div>
-
-            <!-- Title -->
-            <h2 id="pokemon-title" class="text-2xl md:text-3xl font-bold text-white mb-3 text-center">คัตเตอร์ปี (Caterpie)</h2>
-
-            <!-- Location Box -->
-            <div class="bg-slate-900 w-full rounded-xl py-3 px-4 text-center border border-slate-700 mb-4">
-                <p id="pokemon-location" class="text-yellow-400 font-semibold text-base md:text-lg">พบที่ ระเบียงบ้าน: เกาะอยู่บนกระถางต้นไม้ริมระเบียง</p>
-            </div>
-
-            <!-- Search Another Button (when ignoring current) -->
-            <button id="btn-search-another" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2.5 rounded-xl text-sm transition-transform active:scale-95 border border-slate-600 flex items-center justify-center gap-2">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                </svg>
-                ปล่อยผ่านแล้วหาตัวใหม่ (เสียเวลาเล็กน้อย)
-            </button>
-        </section>
-
-        <!-- Inventory Box -->
-        <section class="bg-slate-800 border border-slate-700 rounded-3xl p-4 shadow-lg">
-            <div class="flex flex-wrap gap-2 justify-between items-center mb-3">
-                <h3 class="text-base md:text-lg font-bold flex items-center gap-2 text-white">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-300" viewBox="0 0 20 20" fill="currentColor">
-                        <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
-                    </svg>
-                    กระเป๋าบอล:
-                </h3>
-                <div class="flex items-center gap-2">
-                    <button id="btn-quick-shop" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-2.5 py-1 rounded-lg transition active:scale-95 flex items-center gap-1 shadow">
-                        🏪 ซื้อบอลเพิ่ม
-                    </button>
-                    <span id="catch-count" class="text-emerald-400 font-bold text-xs md:text-sm">จับได้: 0 ตัว</span>
-                </div>
-            </div>
-
-            <div class="grid grid-cols-3 gap-3" role="radiogroup" aria-labelledby="ball-selection">
-                <!-- Copper Ball -->
-                <div class="relative">
-                    <input type="radio" name="ball_type" id="ball-copper" value="copper" class="ball-radio" checked>
-                    <label for="ball-copper" class="ball-label" aria-label="บอลทองแดง มี 6 ลูก เหมาะสำหรับเลเวลต่ำ">
-                        <div class="w-6 h-6 rounded-full bg-orange-500 mb-1 shadow-inner"></div>
-                        <span class="font-bold text-orange-400 text-sm">ทองแดง</span>
-                        <span id="count-copper" class="text-xs text-slate-400 mt-0.5">x6</span>
-                    </label>
-                </div>
-
-                <!-- Silver Ball -->
-                <div class="relative">
-                    <input type="radio" name="ball_type" id="ball-silver" value="silver" class="ball-radio">
-                    <label for="ball-silver" class="ball-label" aria-label="บอลเงิน มี 2 ลูก สมดุลดี">
-                        <div class="w-6 h-6 rounded-full bg-slate-300 mb-1 shadow-inner"></div>
-                        <span class="font-bold text-white text-sm">เงิน</span>
-                        <span id="count-silver" class="text-xs text-slate-400 mt-0.5">x2</span>
-                    </label>
-                </div>
-
-                <!-- Gold Ball -->
-                <div class="relative">
-                    <input type="radio" name="ball_type" id="ball-gold" value="gold" class="ball-radio">
-                    <label for="ball-gold" class="ball-label" aria-label="บอลทองคำ มี 1 ลูก โอกาสจับสูงมาก">
-                        <div class="w-6 h-6 rounded-full bg-yellow-400 mb-1 shadow-inner"></div>
-                        <span class="font-bold text-yellow-400 text-sm">ทองคำ</span>
-                        <span id="count-gold" class="text-xs text-slate-400 mt-0.5">x1</span>
-                    </label>
-                </div>
-            </div>
-        </section>
-
-        <!-- Controls -->
-        <div class="flex flex-col gap-3">
-            <!-- Play Direction Button -->
-            <button id="btn-play-sound" class="w-full bg-[#10b981] hover:bg-[#059669] text-white font-bold text-lg md:text-xl py-3.5 rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 border-b-4 border-[#047857]">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
-                </svg>
-                กดเพื่อฟังทิศทางอีกครั้ง
-            </button>
-
-            <!-- Bottom Row Buttons -->
-            <div class="grid grid-cols-2 gap-3">
-                <button id="btn-read-tts" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm md:text-base py-3.5 rounded-xl shadow transition-transform active:scale-95 border-b-4 border-slate-900 flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
-                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
-                    </svg>
-                    ฟังพิกัดอีกครั้ง
-                </button>
-
-                <button id="btn-throw-ball" class="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-bold text-sm md:text-base py-3.5 rounded-xl shadow transition-transform active:scale-95 border-b-4 border-[#7f1d1d] flex items-center justify-center gap-2">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
-                        <circle cx="12" cy="12" r="4" stroke-width="2"></circle>
-                    </svg>
-                    ขว้างบอลจับ!
-                </button>
-            </div>
-        </div>
-
+    <!-- พื้นที่หน้าจอแสดงผลตามเมนู -->
+    <main class="screen-area" id="screen-display">
+      <div class="screen-title" id="screen-title">หน้าหลัก</div>
+      <div class="content-box" id="screen-message">
+        ยินดีต้อนรับสู่ Monster Quest!<br>
+        กรุณาเลือกเมนูที่ต้องการทำรายการ
+      </div>
+      <div id="alert-box"></div>
     </main>
 
-    <!-- Pokémon Bag Modal -->
-    <div id="bag-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" aria-hidden="true">
-        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-700">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                    🎒 คลังโปเกมอนของคุณ
-                </h2>
-                <button id="btn-close-bag" class="text-slate-400 hover:text-white font-bold text-lg p-1">✕</button>
-            </div>
+    <!-- เมนูหลัก 5 ปุ่ม -->
+    <nav class="view-panel" id="panel-main">
+      <button class="btn" id="btn-shop" onclick="openMenu('shop')">
+        <span>1. ร้านค้า</span>
+        <span>&rarr;</span>
+      </button>
 
-            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 text-sm bg-slate-900/60 p-2.5 rounded-xl border border-slate-700">
-                <div class="flex flex-col">
-                    <span class="text-slate-200 font-semibold">🍖 อาหารเร่งโต (ราคา 20 เหรียญ / ชิ้น)</span>
-                    <span class="text-xs text-slate-400">มีอยู่ในกระเป๋า: <span id="food-count" class="font-bold text-amber-400">3</span> ชิ้น</span>
-                </div>
-                <div class="flex items-center gap-2 w-full sm:w-auto">
-                    <button id="btn-buy-food" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
-                        🪙 ซื้อ 1 ชิ้น (20 เหรียญ)
-                    </button>
-                    <button id="btn-buy-food-5" class="flex-1 sm:flex-none bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
-                        ซื้อ 5 ชิ้น (100 เหรียญ)
-                    </button>
-                </div>
-            </div>
+      <button class="btn" id="btn-petshop" onclick="openMenu('petshop')">
+        <span>2. ร้านสัตว์เลี้ยง</span>
+        <span>&rarr;</span>
+      </button>
 
-            <div id="bag-pokemon-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
-                <!-- Injected via JS -->
-            </div>
+      <button class="btn" id="btn-inventory" onclick="openMenu('inventory')">
+        <span>3. คลังสัตว์เลี้ยง</span>
+        <span id="pet-count-badge" class="btn-tag">0 ตัว</span>
+      </button>
 
-            <div class="mt-4 pt-3 border-t border-slate-700 text-center">
-                <p class="text-xs text-slate-400">โปเกมอนจะค่อยๆ โตขึ้นเองตามเวลา หรือใช้ไอเทมอาหารเพื่อเร่งโตทันที! เมื่อเลเวลสูงขึ้น จะขายได้ราคาดีเยี่ยม</p>
-            </div>
+      <button class="btn" id="btn-catch" onclick="openMenu('catch')">
+        <span>4. สถานที่จับสัตว์เลี้ยง</span>
+        <span>&rarr;</span>
+      </button>
+
+      <button class="btn" id="btn-arena" onclick="openMenu('arena')">
+        <span>5. ลานประลอง (สู้ผู้เล่นจริง)</span>
+        <span>&rarr;</span>
+      </button>
+    </nav>
+
+    <!-- หน้าเมนูย่อย: ร้านค้า (ปุ่มที่ 1) -->
+    <section class="view-panel" id="panel-shop" style="display: none;">
+      <button class="btn" onclick="buyItem('pokeball')">
+        <div class="shop-item-info">
+          <span class="shop-item-name">Pokeball ธรรมดา</span>
+          <span class="shop-item-sub" id="shop-stock-pokeball">ในกระเป๋า: 0 ลูก</span>
         </div>
-    </div>
+        <span class="shop-price-tag">100 G</span>
+      </button>
 
-    <!-- Pokéball Shop Modal -->
-    <div id="shop-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" aria-hidden="true">
-        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl">
-            <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-700">
-                <h2 class="text-xl font-bold text-white flex items-center gap-2">
-                    🏪 ร้านค้าโปเกบอล
-                </h2>
-                <button id="btn-close-shop" class="text-slate-400 hover:text-white font-bold text-lg p-1">✕</button>
-            </div>
-
-            <!-- Current Coins Display in Shop -->
-            <div class="flex items-center justify-between bg-slate-900/80 px-4 py-2.5 rounded-xl border border-slate-700 mb-3">
-                <span class="text-slate-300 text-sm">เหรียญคงเหลือของคุณ:</span>
-                <span class="text-amber-400 font-bold text-lg flex items-center gap-1">
-                    🪙 <span id="shop-player-coins">100</span> เหรียญ
-                </span>
-            </div>
-
-            <!-- Shop Items List -->
-            <div class="flex-1 overflow-y-auto space-y-3 pr-1">
-                <!-- Copper Ball Card -->
-                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-orange-500 shadow-inner flex-shrink-0"></div>
-                            <div>
-                                <h4 class="font-bold text-orange-400 text-sm">บอลทองแดง (Copper Ball)</h4>
-                                <p class="text-xs text-slate-400">อัตราจับ 42% (ลดลงตามเลเวล) · เหมาะกับ Lv 1-30</p>
-                            </div>
-                        </div>
-                        <span class="text-xs text-slate-300">มีอยู่: <span id="shop-count-copper" class="font-bold text-orange-400">6</span></span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
-                        <button onclick="buyBall('copper', 1, 15)" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center">
-                            1 ลูก (15🪙)
-                        </button>
-                        <button onclick="buyBall('copper', 5, 65)" class="bg-amber-600/90 hover:bg-amber-500 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
-                            5 ลูก (65🪙)
-                        </button>
-                        <button onclick="buyBall('copper', 10, 120)" class="bg-amber-700 hover:bg-amber-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
-                            10 ลูก (120🪙)
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Silver Ball Card -->
-                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-slate-300 shadow-inner flex-shrink-0"></div>
-                            <div>
-                                <h4 class="font-bold text-slate-200 text-sm">บอลเงิน (Silver Ball)</h4>
-                                <p class="text-xs text-slate-400">อัตราจับ 65% · ประสิทธิภาพปานกลาง เหมาะกับ Lv 30-70</p>
-                            </div>
-                        </div>
-                        <span class="text-xs text-slate-300">มีอยู่: <span id="shop-count-silver" class="font-bold text-white">2</span></span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
-                        <button onclick="buyBall('silver', 1, 40)" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center">
-                            1 ลูก (40🪙)
-                        </button>
-                        <button onclick="buyBall('silver', 3, 110)" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
-                            3 ลูก (110🪙)
-                        </button>
-                        <button onclick="buyBall('silver', 5, 175)" class="bg-slate-500 hover:bg-slate-400 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
-                            5 ลูก (175🪙)
-                        </button>
-                    </div>
-                </div>
-
-                <!-- Gold Ball Card -->
-                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2">
-                    <div class="flex items-center justify-between">
-                        <div class="flex items-center gap-2.5">
-                            <div class="w-7 h-7 rounded-full bg-yellow-400 shadow-inner flex-shrink-0"></div>
-                            <div>
-                                <h4 class="font-bold text-yellow-400 text-sm">บอลทองคำ (Gold Ball)</h4>
-                                <p class="text-xs text-slate-400">อัตราจับ 85% · ประสิทธิภาพสูงสุด จับยากหรือหายาก</p>
-                            </div>
-                        </div>
-                        <span class="text-xs text-slate-300">มีอยู่: <span id="shop-count-gold" class="font-bold text-yellow-400">1</span></span>
-                    </div>
-                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
-                        <button onclick="buyBall('gold', 1, 100)" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center">
-                            1 ลูก (100🪙)
-                        </button>
-                        <button onclick="buyBall('gold', 3, 270)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
-                            3 ลูก (270🪙)
-                        </button>
-                        <button onclick="buyBall('gold', 5, 420)" class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
-                            5 ลูก (420🪙)
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <div class="mt-3 pt-2.5 border-t border-slate-700 text-center">
-                <p class="text-xs text-slate-400">⚠️ คำเตือน: โปเกมอนเลเวลสูงจับยากขึ้น และมีโอกาสหนีหายไปหากดิ้นหลุด ควรเตรียมบอลชั้นดีไว้เสมอ!</p>
-            </div>
+      <button class="btn" onclick="buyItem('greatball')">
+        <div class="shop-item-info">
+          <span class="shop-item-name">Great Ball</span>
+          <span class="shop-item-sub" id="shop-stock-greatball">ในกระเป๋า: 0 ลูก</span>
         </div>
-    </div>
+        <span class="shop-price-tag">300 G</span>
+      </button>
 
-    <!-- Custom Modal for Alerts -->
-    <div id="custom-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" aria-hidden="true">
-        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl" id="modal-content">
-            <div id="modal-icon" class="mb-4 flex justify-center">
-                <!-- Icon injected via JS -->
+      <button class="btn" onclick="buyItem('ultraball')">
+        <div class="shop-item-info">
+          <span class="shop-item-name">Ultra Ball</span>
+          <span class="shop-item-sub" id="shop-stock-ultraball">ในกระเป๋า: 0 ลูก</span>
+        </div>
+        <span class="shop-price-tag">800 G</span>
+      </button>
+    </section>
+
+    <!-- หน้าเมนูย่อย: ร้านสัตว์เลี้ยง (ปุ่มที่ 2) -->
+    <section class="view-panel" id="panel-petshop" style="display: none;">
+      <div class="inventory-scroll">
+        <button class="btn" onclick="buyPetFood('food_fire')">
+          <div class="shop-item-info">
+            <span class="shop-item-name">🔥 อาหารธาตุไฟ</span>
+            <span class="shop-item-sub" id="stock-food_fire">ในกระเป๋า: 0 ชิ้น</span>
+          </div>
+          <span class="shop-price-tag">80 G</span>
+        </button>
+
+        <button class="btn" onclick="buyPetFood('food_water')">
+          <div class="shop-item-info">
+            <span class="shop-item-name">💧 อาหารธาตุน้ำ</span>
+            <span class="shop-item-sub" id="stock-food_water">ในกระเป๋า: 0 ชิ้น</span>
+          </div>
+          <span class="shop-price-tag">80 G</span>
+        </button>
+
+        <button class="btn" onclick="buyPetFood('food_grass')">
+          <div class="shop-item-info">
+            <span class="shop-item-name">🌿 อาหารธาตุพืช</span>
+            <span class="shop-item-sub" id="stock-food_grass">ในกระเป๋า: 0 ชิ้น</span>
+          </div>
+          <span class="shop-price-tag">80 G</span>
+        </button>
+
+        <button class="btn" onclick="buyPetFood('food_electric')">
+          <div class="shop-item-info">
+            <span class="shop-item-name">⚡ อาหารธาตุไฟฟ้า</span>
+            <span class="shop-item-sub" id="stock-food_electric">ในกระเป๋า: 0 ชิ้น</span>
+          </div>
+          <span class="shop-price-tag">100 G</span>
+        </button>
+
+        <button class="btn" onclick="buyPetFood('food_rock')">
+          <div class="shop-item-info">
+            <span class="shop-item-name">🪨 อาหารธาตุหิน</span>
+            <span class="shop-item-sub" id="stock-food_rock">ในกระเป๋า: 0 ชิ้น</span>
+          </div>
+          <span class="shop-price-tag">80 G</span>
+        </button>
+      </div>
+    </section>
+
+    <!-- หน้าเมนูย่อย: คลังสัตว์เลี้ยง (ปุ่มที่ 3) -->
+    <section class="view-panel" id="panel-inventory" style="display: none;">
+      <div class="inventory-scroll" id="inventory-list">
+        <!-- รายการสัตว์เลี้ยงถูกสร้างแบบไดนามิกจาก JavaScript -->
+      </div>
+    </section>
+
+    <!-- หน้าเมนูย่อย: สถานที่จับสัตว์เลี้ยง (ปุ่มที่ 4) -->
+    <section class="view-panel" id="panel-catch" style="display: none;">
+      <div class="ball-summary-bar">
+        <span>Pokeball: <b class="ball-count-val" id="catch-count-poke">0</b></span>
+        <span>Great Ball: <b class="ball-count-val" id="catch-count-great">0</b></span>
+        <span>Ultra Ball: <b class="ball-count-val" id="catch-count-ultra">0</b></span>
+      </div>
+
+      <div id="catch-interactive-area" class="view-panel">
+        <!-- แสดงผลหน้าเลือกโซน หรือ หน้าสุ่มจับในโซนแบบไดนามิก -->
+      </div>
+    </section>
+
+    <!-- หน้าเมนูย่อย: ลานประลอง (ปุ่มที่ 5) -->
+    <section class="view-panel" id="panel-arena" style="display: none;">
+      <div id="arena-interactive-area" class="view-panel">
+        <!-- ควบคุมด้วย JavaScript สำหรับเลือกตัวแทน / Matchmaking / สรุปผล -->
+      </div>
+    </section>
+
+    <!-- เมนูย้อนกลับ -->
+    <footer class="footer-bar">
+      <button class="btn btn-secondary" id="btn-back" onclick="goBack()" disabled>
+        ย้อนกลับ
+      </button>
+    </footer>
+  </div>
+
+  <script>
+    // --- การตั้งค่าและคีย์ localStorage ---
+    const STORAGE_KEY_PLAYER = 'monster_quest_player_data';
+    const STORAGE_KEY_PETS = 'monster_quest_pet_inventory';
+
+    // รายการสินค้าในร้านค้า Pokeball (เมนู 1)
+    const SHOP_ITEMS = {
+      pokeball: { name: 'Pokeball ธรรมดา', price: 100 },
+      greatball: { name: 'Great Ball', price: 300 },
+      ultraball: { name: 'Ultra Ball', price: 800 }
+    };
+
+    // รายการอาหารตามธาตุในร้านสัตว์เลี้ยง (เมนู 2)
+    const PET_FOODS = {
+      food_fire: { key: 'food_fire', name: 'อาหารธาตุไฟ', element: 'ไฟ', price: 80, icon: '🔥' },
+      food_water: { key: 'food_water', name: 'อาหารธาตุน้ำ', element: 'น้ำ', price: 80, icon: '💧' },
+      food_grass: { key: 'food_grass', name: 'อาหารธาตุพืช', element: 'พืช', price: 80, icon: '🌿' },
+      food_electric: { key: 'food_electric', name: 'อาหารธาตุไฟฟ้า', element: 'ไฟฟ้า', price: 100, icon: '⚡' },
+      food_rock: { key: 'food_rock', name: 'อาหารธาตุหิน', element: 'หิน', price: 80, icon: '🪨' }
+    };
+
+    // แผนที่จับคู่ชื่อธาตุกับคีย์ของอาหาร
+    const ELEMENT_TO_FOOD_KEY = {
+      'ไฟ': 'food_fire',
+      'น้ำ': 'food_water',
+      'พืช': 'food_grass',
+      'ไฟฟ้า': 'food_electric',
+      'หิน': 'food_rock'
+    };
+
+    // ฐานข้อมูลโซนสถานที่จับสัตว์เลี้ยง 4 โซน (เมนู 4)
+    const CATCH_ZONES = {
+      grassland: {
+        id: 'grassland',
+        name: 'โซนที่ 1: ทุ่งหญ้าเริ่มต้น (Lv. 1 - 5)',
+        shortName: 'ทุ่งหญ้าเริ่มต้น',
+        icon: '🌱',
+        levelMin: 1,
+        levelMax: 5,
+        badgeText: 'Lv. 1 - 5',
+        desc: 'ทุ่งหญ้ากว้างสำหรับผู้เริ่มต้น โปเกมอนเชื่องและจับง่าย',
+        elements: ['พืช', 'น้ำ'],
+        names: ['ฟุชิกิดาเนะ', 'เถาวัลย์พฤกษา', 'กระต่ายทุ่งหญ้า', 'กบใบไม้', 'หนูพงไพร', 'เต่าคลื่นวารี']
+      },
+      deep_forest: {
+        id: 'deep_forest',
+        name: 'โซนที่ 2: ป่าลึกหมอกหนา (Lv. 6 - 15)',
+        shortName: 'ป่าลึกหมอกหนา',
+        icon: '🌲',
+        levelMin: 6,
+        levelMax: 15,
+        badgeText: 'Lv. 6 - 15',
+        desc: 'ป่ารกทึบและหมอกลงจัด สัตว์ป่าเริ่มมีความแกร่งและระแวดระวัง',
+        elements: ['พืช', 'ไฟฟ้า', 'น้ำ'],
+        names: ['จิ้งจอกสายหมอก', 'งูหลามพงไพร', 'ค้างคาวสายฟ้า', 'หนูสายฟ้าฟาด', 'เห็ดพิษราตรี', 'ไดโนเสาร์ใบมีด']
+      },
+      volcano_valley: {
+        id: 'volcano_valley',
+        name: 'โซนที่ 3: หุบเขาภูเขาไฟ (Lv. 16 - 30)',
+        shortName: 'หุบเขาภูเขาไฟ',
+        icon: '🌋',
+        levelMin: 16,
+        levelMax: 30,
+        badgeText: 'Lv. 16 - 30',
+        desc: 'หุบเขาลาวาเดือดและเถ้าถ่าน สัตว์ป่าดุร้าย พลังทำลายล้างสูง',
+        elements: ['ไฟ', 'หิน'],
+        names: ['ไฟมังกร', 'จิ้งจอกเพลิง', 'มังกรลาวา', 'โกเลมเพลิงอัคคี', 'แรดเกราะหิน', 'สลาแมนเดอร์ไฟ']
+      },
+      ancient_temple: {
+        id: 'ancient_temple',
+        name: 'โซนที่ 4: วิหารโบราณไร้พ่าย (Lv. 31 - 50+)',
+        shortName: 'วิหารโบราณไร้พ่าย',
+        icon: '🏛️',
+        levelMin: 31,
+        levelMax: 50,
+        badgeText: 'Lv. 31 - 50+',
+        desc: 'ซากวิหารลึกลับในตำนาน ที่สถิตของมอนสเตอร์ระดับเทพโบราณ',
+        elements: ['ไฟฟ้า', 'ไฟ', 'หิน', 'น้ำ'],
+        names: ['มังกรเทพอัสนี', 'วิหคเพลิงอมตะ', 'โกเลมศิลาบรรพกาล', 'จ้าวสมุทรโบราณ', 'พยัคฆ์สายฟ้าทมิฬ', 'มังกรจักรพรรดิ']
+      }
+    };
+
+    // ธาตุและจุดอ่อน
+    const ELEMENT_WEAKNESS = {
+      'ไฟ': 'น้ำ',
+      'น้ำ': 'ไฟฟ้า',
+      'พืช': 'ไฟ',
+      'ไฟฟ้า': 'หิน',
+      'หิน': 'พืช'
+    };
+
+    // รายชื่อผู้เล่นจำลองสำหรับระบบ Matchmaking ลานประลอง (เมนู 5)
+    const SIMULATED_PLAYERS = [
+      { trainerName: 'Red_Trainer', rank: 'Master III', guild: 'Kanto Legends' },
+      { trainerName: 'Viper_TH', rank: 'Diamond I', guild: 'Siam Warriors' },
+      { trainerName: 'ShadowX', rank: 'Platinum II', guild: 'Dark Syndicate' },
+      { trainerName: 'DragonRider', rank: 'Diamond II', guild: 'Dragon Sanctum' },
+      { trainerName: 'Misty_Aqua', rank: 'Gold I', guild: 'Cerulean Gym' },
+      { trainerName: 'Cyber_Volt', rank: 'Platinum III', guild: 'Neo Electric' },
+      { trainerName: 'Ash_Ketchum', rank: 'Grandmaster', guild: 'Pallet Town' },
+      { trainerName: 'Kage_Storm', rank: 'Gold II', guild: 'Shadow Clan' }
+    ];
+
+    // ข้อมูลเริ่มต้นสำหรับผู้เล่นใหม่
+    const defaultPlayerData = {
+      money: 1000,
+      inventory: {
+        pokeball: 5,
+        greatball: 1,
+        ultraball: 0,
+        food_fire: 2,
+        food_water: 2,
+        food_grass: 2,
+        food_electric: 1,
+        food_rock: 1
+      }
+    };
+
+    // คลังสัตว์เลี้ยงเริ่มต้น
+    const defaultPetInventory = [
+      {
+        id: 1,
+        name: 'ฮิโตคาเงะ',
+        level: 5,
+        element: 'ไฟ',
+        atk: 28,
+        hp: 45,
+        weakness: 'น้ำ',
+        sellPrice: 260
+      },
+      {
+        id: 2,
+        name: 'ฟุชิกิดาเนะ',
+        level: 5,
+        element: 'พืช',
+        atk: 22,
+        hp: 50,
+        weakness: 'ไฟ',
+        sellPrice: 260
+      },
+      {
+        id: 3,
+        name: 'เซนิกาเมะ',
+        level: 4,
+        element: 'น้ำ',
+        atk: 20,
+        hp: 52,
+        weakness: 'ไฟฟ้า',
+        sellPrice: 220
+      }
+    ];
+
+    // ตัวแปรสถานะเกม
+    let playerData = {};
+    let petInventory = [];
+    let currentScreen = 'main';
+
+    // สถานะระบบจับสัตว์เลี้ยง
+    let currentCatchZone = null;
+    let wildPokemon = null;
+
+    // สถานะระบบลานประลอง
+    let selectedChampionId = null;
+    let matchedOpponent = null;
+    let matchmakingTimer = null;
+
+    // --- ฟังก์ชันบันทึกและโหลดข้อมูล (localStorage) ---
+    function saveGame() {
+      try {
+        localStorage.setItem(STORAGE_KEY_PLAYER, JSON.stringify(playerData));
+        localStorage.setItem(STORAGE_KEY_PETS, JSON.stringify(petInventory));
+      } catch (err) {
+        console.error('ไม่สามารถบันทึกข้อมูลลง localStorage ได้:', err);
+      }
+    }
+
+    function loadGame() {
+      try {
+        const savedPlayer = localStorage.getItem(STORAGE_KEY_PLAYER);
+        const savedPets = localStorage.getItem(STORAGE_KEY_PETS);
+
+        if (savedPlayer) {
+          playerData = JSON.parse(savedPlayer);
+          if (!playerData.inventory) {
+            playerData.inventory = { ...defaultPlayerData.inventory };
+          } else {
+            Object.keys(defaultPlayerData.inventory).forEach(k => {
+              if (typeof playerData.inventory[k] !== 'number') {
+                playerData.inventory[k] = defaultPlayerData.inventory[k];
+              }
+            });
+          }
+        } else {
+          playerData = JSON.parse(JSON.stringify(defaultPlayerData));
+        }
+
+        if (savedPets) {
+          petInventory = JSON.parse(savedPets);
+        } else {
+          petInventory = JSON.parse(JSON.stringify(defaultPetInventory));
+        }
+      } catch (err) {
+        console.warn('เกิดข้อผิดพลาดในการโหลดข้อมูล กำลังรีเซ็ตเป็นค่าเริ่มต้น:', err);
+        playerData = JSON.parse(JSON.stringify(defaultPlayerData));
+        petInventory = JSON.parse(JSON.stringify(defaultPetInventory));
+      }
+
+      saveGame();
+      updateUI();
+    }
+
+    // --- ฟังก์ชันอัปเดต UI หลัก ---
+    function updateUI() {
+      const inv = playerData.inventory || {};
+      const totalBalls = (inv.pokeball || 0) + (inv.greatball || 0) + (inv.ultraball || 0);
+      const totalFoods = (inv.food_fire || 0) + (inv.food_water || 0) + (inv.food_grass || 0) +
+                         (inv.food_electric || 0) + (inv.food_rock || 0);
+
+      document.getElementById('player-money').textContent = `${playerData.money.toLocaleString()} G`;
+      document.getElementById('ball-count').textContent = `บอล: ${totalBalls}`;
+      document.getElementById('food-count').textContent = `อาหาร: ${totalFoods}`;
+      document.getElementById('pet-count-badge').textContent = `${petInventory.length} ตัว`;
+
+      const catchPoke = document.getElementById('catch-count-poke');
+      const catchGreat = document.getElementById('catch-count-great');
+      const catchUltra = document.getElementById('catch-count-ultra');
+      if (catchPoke) catchPoke.textContent = inv.pokeball || 0;
+      if (catchGreat) catchGreat.textContent = inv.greatball || 0;
+      if (catchUltra) catchUltra.textContent = inv.ultraball || 0;
+
+      document.getElementById('btn-back').disabled = (currentScreen === 'main');
+    }
+
+    function showAlert(text, type = 'success') {
+      const alertBox = document.getElementById('alert-box');
+      alertBox.innerHTML = `<div class="alert-banner ${type}">${text}</div>`;
+      setTimeout(() => {
+        if (alertBox.innerHTML.includes(text)) {
+          alertBox.innerHTML = '';
+        }
+      }, 3500);
+    }
+
+    // --- ฟังก์ชันร้านค้า Pokeball (ปุ่มที่ 1) ---
+    function renderShop() {
+      const inv = playerData.inventory || {};
+      document.getElementById('shop-stock-pokeball').textContent = `ในกระเป๋า: ${inv.pokeball || 0} ลูก`;
+      document.getElementById('shop-stock-greatball').textContent = `ในกระเป๋า: ${inv.greatball || 0} ลูก`;
+      document.getElementById('shop-stock-ultraball').textContent = `ในกระเป๋า: ${inv.ultraball || 0} ลูก`;
+    }
+
+    function buyItem(itemKey) {
+      const item = SHOP_ITEMS[itemKey];
+      if (!item) return;
+
+      if (playerData.money < item.price) {
+        showAlert(`เงินไม่พอสำหรับซื้อ ${item.name}! (ต้องการ ${item.price} G)`, 'error');
+        return;
+      }
+
+      playerData.money -= item.price;
+      playerData.inventory[itemKey] = (playerData.inventory[itemKey] || 0) + 1;
+
+      saveGame();
+      updateUI();
+      renderShop();
+      showAlert(`ซื้อ ${item.name} สำเร็จ! (-${item.price} G)`, 'success');
+    }
+
+    // --- ฟังก์ชันร้านสัตว์เลี้ยง (ปุ่มที่ 2) ---
+    function renderPetShop() {
+      const inv = playerData.inventory || {};
+      Object.keys(PET_FOODS).forEach(key => {
+        const span = document.getElementById(`stock-${key}`);
+        if (span) {
+          span.textContent = `ในกระเป๋า: ${inv[key] || 0} ชิ้น`;
+        }
+      });
+    }
+
+    function buyPetFood(foodKey) {
+      const food = PET_FOODS[foodKey];
+      if (!food) return;
+
+      if (playerData.money < food.price) {
+        showAlert(`เงินไม่พอสำหรับซื้อ ${food.name}! (ต้องการ ${food.price} G)`, 'error');
+        return;
+      }
+
+      playerData.money -= food.price;
+      playerData.inventory[foodKey] = (playerData.inventory[foodKey] || 0) + 1;
+
+      saveGame();
+      updateUI();
+      renderPetShop();
+      showAlert(`ซื้อ ${food.name} สำเร็จ! (-${food.price} G)`, 'success');
+    }
+
+    // --- ฟังก์ชันคลังสัตว์เลี้ยง & การให้อาหาร (ปุ่มที่ 3) ---
+    function renderInventory() {
+      const listContainer = document.getElementById('inventory-list');
+      listContainer.innerHTML = '';
+
+      if (petInventory.length === 0) {
+        listContainer.innerHTML = `
+          <div class="content-box">
+            ไม่มีสัตว์เลี้ยงอยู่ในคลังขณะนี้<br>
+            คุณสามารถไปจับสัตว์เลี้ยงได้ที่ "สถานที่จับสัตว์เลี้ยง"
+          </div>
+        `;
+        return;
+      }
+
+      const inv = playerData.inventory || {};
+
+      petInventory.forEach((pet, index) => {
+        const sellPrice = pet.sellPrice || (pet.level * 40 + 60);
+        const foodKey = ELEMENT_TO_FOOD_KEY[pet.element];
+        const foodInfo = PET_FOODS[foodKey];
+        const foodCount = foodKey ? (inv[foodKey] || 0) : 0;
+
+        const card = document.createElement('div');
+        card.className = 'pet-card';
+        card.innerHTML = `
+          <div class="pet-info">
+            <div class="pet-name-line">
+              <span>${pet.name || 'มอนสเตอร์'}</span>
+              <span class="btn-tag">ธาตุ${pet.element}</span>
             </div>
-            <h2 id="modal-title" class="text-2xl font-bold text-white mb-2">Title</h2>
-            <p id="modal-desc" class="text-slate-300 mb-6">Description</p>
-            <button id="btn-modal-close" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl w-full text-lg">
-                ตกลง
+            <div class="pet-stat-line">
+              เลเวล: ${pet.level}, ธาตุ: ${pet.element}, ATK: ${pet.atk}, HP: ${pet.hp}, แพ้ทาง: ${pet.weakness}
+            </div>
+          </div>
+          <div class="pet-action-row">
+            <button class="btn-feed" onclick="feedPet(${index})">
+              ${foodInfo ? foodInfo.icon : '🍽️'} ให้อาหารธาตุ${pet.element} (${foodCount} ชิ้น)
             </button>
+            <button class="btn-sell" onclick="sellPet(${index})">
+              ขาย (${sellPrice} G)
+            </button>
+          </div>
+        `;
+        listContainer.appendChild(card);
+      });
+    }
+
+    function feedPet(index) {
+      if (index < 0 || index >= petInventory.length) return;
+
+      const pet = petInventory[index];
+      const foodKey = ELEMENT_TO_FOOD_KEY[pet.element];
+      const foodInfo = PET_FOODS[foodKey];
+
+      if (!foodInfo) {
+        showAlert(`ไม่พบชนิดอาหารสำหรับสัตว์เลี้ยงธาตุ ${pet.element}`, 'error');
+        return;
+      }
+
+      const currentFood = (playerData.inventory && playerData.inventory[foodKey]) || 0;
+      if (currentFood <= 0) {
+        showAlert(`ไม่มี "${foodInfo.name}" ในกระเป๋า! ไปซื้อได้ที่ร้านสัตว์เลี้ยง`, 'error');
+        return;
+      }
+
+      playerData.inventory[foodKey]--;
+      pet.level += 1;
+
+      const atkGain = Math.floor(Math.random() * 3) + 4;
+      const hpGain = Math.floor(Math.random() * 5) + 8;
+      pet.atk += atkGain;
+      pet.hp += hpGain;
+      pet.sellPrice = pet.level * 40 + 60;
+
+      saveGame();
+      updateUI();
+      renderInventory();
+
+      showAlert(`✨ เลเวลอัป! ${pet.name} ก้าวสู่ Lv.${pet.level} (ATK +${atkGain}, HP +${hpGain}, ราคาขาย +40 G)`, 'success');
+    }
+
+    function sellPet(index) {
+      if (index < 0 || index >= petInventory.length) return;
+
+      const pet = petInventory[index];
+      const sellPrice = pet.sellPrice || (pet.level * 40 + 60);
+      const petName = pet.name || 'มอนสเตอร์';
+
+      if (selectedChampionId === pet.id) {
+        selectedChampionId = null;
+      }
+
+      petInventory.splice(index, 1);
+      playerData.money += sellPrice;
+
+      saveGame();
+      updateUI();
+      renderInventory();
+      showAlert(`ขาย ${petName} สำเร็จ! ได้รับ +${sellPrice} G`, 'success');
+    }
+
+    // --- ฟังก์ชันสถานที่จับสัตว์เลี้ยง (ปุ่มที่ 4 - ระบบเลือกโซน 4 ระดับ) ---
+
+    function selectCatchZone(zoneId) {
+      currentCatchZone = zoneId;
+      wildPokemon = null;
+      renderCatchScreen();
+    }
+
+    function returnToZoneSelection() {
+      currentCatchZone = null;
+      wildPokemon = null;
+      renderCatchScreen();
+    }
+
+    // สุ่มหาโปเกมอนป่าตามช่วงเลเวลและสเตตัสที่สอดคล้องกับโซน
+    function searchWildPokemonInZone() {
+      if (!currentCatchZone) return;
+      const zone = CATCH_ZONES[currentCatchZone];
+
+      // สุ่มเลเวลในช่วงของโซนนั้น
+      const level = Math.floor(Math.random() * (zone.levelMax - zone.levelMin + 1)) + zone.levelMin;
+
+      // สุ่มชื่อและธาตุ
+      const randomName = zone.names[Math.floor(Math.random() * zone.names.length)];
+      const randomElement = zone.elements[Math.floor(Math.random() * zone.elements.length)];
+      const weakness = ELEMENT_WEAKNESS[randomElement] || 'น้ำ';
+
+      // คำนวณสเตตัสให้สเกลตามเลเวลของโซนอย่างสมดุล
+      const atk = level * 5 + Math.floor(Math.random() * 8) + 12;
+      const hp = level * 8 + Math.floor(Math.random() * 12) + 25;
+      const sellPrice = level * 40 + 80;
+
+      wildPokemon = {
+        id: Date.now(),
+        name: randomName,
+        level: level,
+        element: randomElement,
+        atk: atk,
+        hp: hp,
+        weakness: weakness,
+        sellPrice: sellPrice,
+        zoneName: zone.name
+      };
+
+      const msg = `คุณเจอ <strong>${wildPokemon.name} Lv.${wildPokemon.level}!</strong><br>ธาตุ: ${wildPokemon.element} | ATK: ${wildPokemon.atk} | HP: ${wildPokemon.hp}`;
+      renderCatchScreen(msg);
+    }
+
+    // โยนบอลจับสัตว์เลี้ยง (คำนวณ Catch Rate สมดุลรองรับ Lv. 1 - 50+)
+    function throwBall(ballType) {
+      if (!wildPokemon) return;
+
+      const inv = playerData.inventory || {};
+      const currentBalls = inv[ballType] || 0;
+
+      if (currentBalls <= 0) {
+        showAlert('คุณไม่มี Pokeball ชนิดนี้เหลืออยู่ในกระเป๋า!', 'error');
+        return;
+      }
+
+      inv[ballType]--;
+      playerData.inventory = inv;
+
+      // Base catch rate คำนวณตามสัดส่วนเลเวล (Lv.1: 88%, Lv.50: 18%)
+      const baseCatchRate = Math.max(15, Math.round(90 - ((wildPokemon.level - 1) / 49) * 72));
+      let ballBonus = 0;
+      let ballName = 'Pokeball';
+
+      if (ballType === 'pokeball') {
+        ballBonus = 0;
+        ballName = 'Pokeball ธรรมดา';
+      } else if (ballType === 'greatball') {
+        ballBonus = 22;
+        ballName = 'Great Ball';
+      } else if (ballType === 'ultraball') {
+        ballBonus = 45;
+        ballName = 'Ultra Ball';
+      }
+
+      const totalRate = Math.min(95, Math.max(6, baseCatchRate + ballBonus));
+      const roll = Math.random() * 100;
+
+      if (roll <= totalRate) {
+        // จับสำเร็จ
+        const caughtPet = { ...wildPokemon };
+        petInventory.push(caughtPet);
+
+        saveGame();
+        updateUI();
+
+        const caughtName = caughtPet.name;
+        const caughtLevel = caughtPet.level;
+        wildPokemon = null;
+
+        renderCatchScreen(
+          `🎉 <strong>จับสำเร็จ!</strong><br>คุณใช้ ${ballName} จับ <strong>${caughtName} Lv.${caughtLevel}</strong> ได้สำเร็จ!<br>ถูกเพิ่มเข้าสู่คลังสัตว์เลี้ยงแล้ว`,
+          'success'
+        );
+      } else {
+        // จับพลาด
+        saveGame();
+        updateUI();
+
+        const fleeRoll = Math.random() * 100;
+        if (fleeRoll < 35) {
+          const fleeName = wildPokemon.name;
+          wildPokemon = null;
+          renderCatchScreen(
+            `💨 <strong>จับพลาด!</strong><br>${fleeName} ดิ้นหลุดออกมาและวิ่งหนีหายไปแล้ว!`,
+            'error'
+          );
+        } else {
+          renderCatchScreen(
+            `💨 <strong>จับพลาด!</strong><br>${wildPokemon.name} Lv.${wildPokemon.level} ดิ้นหลุดออกมาได้! สามารถลองโยนบอลใหม่ได้`,
+            'error'
+          );
+        }
+      }
+    }
+
+    function fleeEncounter() {
+      wildPokemon = null;
+      renderCatchScreen('คุณวิ่งหนีออกมาอย่างปลอดภัย<br>สามารถกดสุ่มหาโปเกมอนป่าตัวใหม่ได้');
+    }
+
+    // แสดงผลหน้าจอสถานที่จับสัตว์เลี้ยง
+    function renderCatchScreen(statusMessage = null, alertType = null) {
+      updateUI();
+      const area = document.getElementById('catch-interactive-area');
+      const titleElem = document.getElementById('screen-title');
+      const msgElem = document.getElementById('screen-message');
+
+      // 1. ถ้ายังไม่ได้เลือกโซน -> แสดงปุ่มเลือก 4 โซน
+      if (!currentCatchZone) {
+        titleElem.textContent = '4. สถานที่จับสัตว์เลี้ยง (เลือกโซน)';
+        msgElem.innerHTML = 'กรุณาเลือกโซนพื้นที่ที่คุณต้องการออกสำรวจและจับสัตว์เลี้ยง:';
+
+        let zoneButtonsHtml = '';
+        Object.keys(CATCH_ZONES).forEach(key => {
+          const zone = CATCH_ZONES[key];
+          zoneButtonsHtml += `
+            <button class="btn" onclick="selectCatchZone('${zone.id}')">
+              <div class="shop-item-info">
+                <span class="shop-item-name">${zone.icon} ${zone.name}</span>
+                <span class="shop-item-sub">${zone.desc}</span>
+              </div>
+              <span class="badge-money" style="background:#1e293b; color:#38bdf8; border-color:#38bdf8; white-space:nowrap;">
+                ${zone.badgeText}
+              </span>
+            </button>
+          `;
+        });
+
+        area.innerHTML = zoneButtonsHtml;
+        return;
+      }
+
+      // 2. ถ้าเลือกโซนแล้ว
+      const zone = CATCH_ZONES[currentCatchZone];
+      titleElem.textContent = `4. ${zone.shortName}`;
+
+      if (statusMessage) {
+        msgElem.innerHTML = statusMessage;
+      } else {
+        msgElem.innerHTML = `
+          ${zone.icon} กำลังสำรวจ <strong>${zone.name}</strong><br>
+          กดปุ่มด้านล่างเพื่อเริ่มค้นหาโปเกมอนป่าในโซนนี้
+        `;
+      }
+
+      if (alertType) {
+        showAlert(alertType === 'success' ? 'จับสัตว์เลี้ยงสำเร็จ!' : 'จับพลาด!', alertType);
+      }
+
+      area.innerHTML = '';
+      const inv = playerData.inventory || {};
+      const totalBalls = (inv.pokeball || 0) + (inv.greatball || 0) + (inv.ultraball || 0);
+
+      // ถ้ายังไม่เจอโปเกมอนป่า
+      if (!wildPokemon) {
+        area.innerHTML = `
+          <button class="btn btn-search-wild" onclick="searchWildPokemonInZone()">
+            <span>${zone.icon} สุ่มหาโปเกมอนป่าในโซนนี้</span>
+            <span>&rarr;</span>
+          </button>
+          <button class="btn btn-secondary" onclick="returnToZoneSelection()">
+            🗺️ เปลี่ยนโซนพื้นที่
+          </button>
+        `;
+        return;
+      }
+
+      // ถ้ากำลังเจอโปเกมอนป่า
+      let buttonsHtml = '';
+      if (totalBalls === 0) {
+        buttonsHtml = `
+          <div class="content-box" style="color: #ef4444; border-color: #ef4444;">
+            คุณไม่มี Pokeball เหลืออยู่ในกระเป๋าเลย!
+          </div>
+          <button class="btn btn-secondary" onclick="openMenu('shop')">
+            ไปที่ร้านค้าเพื่อซื้อบอล
+          </button>
+          <button class="btn btn-secondary" onclick="fleeEncounter()">
+            วิ่งหนี
+          </button>
+        `;
+      } else {
+        buttonsHtml = `
+          <button class="btn btn-catch-action" onclick="throwBall('pokeball')" ${(inv.pokeball || 0) <= 0 ? 'disabled' : ''}>
+            <span>โยน Pokeball ธรรมดา</span>
+            <span class="btn-tag">เหลือ: ${inv.pokeball || 0} ลูก</span>
+          </button>
+
+          <button class="btn btn-catch-action" onclick="throwBall('greatball')" ${(inv.greatball || 0) <= 0 ? 'disabled' : ''}>
+            <span>โยน Great Ball</span>
+            <span class="btn-tag">เหลือ: ${inv.greatball || 0} ลูก</span>
+          </button>
+
+          <button class="btn btn-catch-action" onclick="throwBall('ultraball')" ${(inv.ultraball || 0) <= 0 ? 'disabled' : ''}>
+            <span>โยน Ultra Ball</span>
+            <span class="btn-tag">เหลือ: ${inv.ultraball || 0} ลูก</span>
+          </button>
+
+          <button class="btn btn-secondary" onclick="fleeEncounter()">
+            🏃 วิ่งหนี / หาตัวใหม่
+          </button>
+        `;
+      }
+
+      area.innerHTML = buttonsHtml;
+    }
+
+    // --- ฟังก์ชันลานประลอง (ปุ่มที่ 5 - สู้ผู้เล่นจริง Matchmaking & คำนวณสรุปผลทันทีแบบมินิมอล) ---
+
+    function selectChampion(petId) {
+      selectedChampionId = petId;
+      matchedOpponent = null;
+      renderArenaScreen();
+    }
+
+    function changeChampion() {
+      cancelMatchmaking();
+      selectedChampionId = null;
+      matchedOpponent = null;
+      renderArenaScreen();
+    }
+
+    function cancelMatchmaking() {
+      if (matchmakingTimer) {
+        clearTimeout(matchmakingTimer);
+        matchmakingTimer = null;
+      }
+      matchedOpponent = null;
+    }
+
+    // เริ่มระบบ Matchmaking ค้นหาคู่ต่อสู้ออนไลน์
+    function startMatchmaking() {
+      const champion = petInventory.find(p => p.id === selectedChampionId);
+      if (!champion) return;
+
+      const area = document.getElementById('arena-interactive-area');
+      const titleElem = document.getElementById('screen-title');
+      const msgElem = document.getElementById('screen-message');
+
+      titleElem.textContent = '5. ลานประลอง (กำลังค้นหาคู่ต่อสู้...)';
+      msgElem.innerHTML = `
+        📡 กำลังเชื่อมต่อ Server Matchmaking...<br>
+        ค้นหาเทรนเนอร์ที่มีระดับพลังสูสีกับ <strong>${champion.name} Lv.${champion.level}</strong>
+      `;
+
+      area.innerHTML = `
+        <div class="matchmaking-card">
+          <div class="pulse-text">🔍 กำลังค้นหาคู่ต่อสู้ในระบบออนไลน์...</div>
+          <div style="font-size:0.85rem; color:#94a3b8;">เซิร์ฟเวอร์: Asia-East (Ranked Match)</div>
         </div>
-    </div>
+        <button class="btn btn-secondary" onclick="renderArenaScreen()">
+          ❌ ยกเลิกการค้นหา
+        </button>
+      `;
 
-    <script>
-        // Game State
-        const state = {
-            coins: 100,
-            foodCount: 3,
-            inventory: { copper: 6, silver: 2, gold: 1 },
-            caughtCount: 0,
-            bag: [], // Array of caught pokemon objects
-            currentPokemon: null,
-            isCaught: false
-        };
+      // จำลองค้นหาห้อง 1.5 วินาที
+      cancelMatchmaking();
+      matchmakingTimer = setTimeout(() => {
+        completeMatchmaking(champion);
+      }, 1500);
+    }
 
-        const POKEMON_DATABASE = [
-            { name: "คัตเตอร์ปี (Caterpie)", iconSvg: '<path d="M8 9a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm-4-3a5.006 5.006 0 0 0-4.9 4H5a1 1 0 0 0 0 2h1.27a4.975 4.975 0 0 0 0 2H5a1 1 0 0 0 0 2h2.2a5 5 0 0 0 9.6 0H19a1 1 0 0 0 0-2h-1.27a4.975 4.975 0 0 0 0-2H19a1 1 0 0 0 0-2h-1.1A5.006 5.006 0 0 0 12 6zm0 10a3 3 0 1 1 3-3 3 3 0 0 1-3 3z"/>', color: "text-lime-500" },
-            { name: "พิกาจู (Pikachu)", iconSvg: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/>', color: "text-yellow-400" },
-            { name: "ชาแมนเดอร์ (Charmander)", iconSvg: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/>', color: "text-orange-500" },
-            { name: "สเคอร์เทิล (Squirtle)", iconSvg: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>', color: "text-blue-400" },
-            { name: "ดราโกไนต์ (Dragonite)", iconSvg: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>', color: "text-amber-500" },
-            { name: "มิวทู (Mewtwo)", iconSvg: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-4h2zm0-6h-2V7h2z"/>', color: "text-purple-400" }
-        ];
+    // Matchmaking สำเร็จ -> พบคู่ต่อสู้
+    function completeMatchmaking(champion) {
+      const randomTrainer = SIMULATED_PLAYERS[Math.floor(Math.random() * SIMULATED_PLAYERS.length)];
 
-        const LOCATIONS = [
-            "ระเบียงบ้าน: เกาะอยู่บนกระถางต้นไม้ริมระเบียง",
-            "ห้องรับแขก: หลบอยู่ใต้โซฟาตัวใหญ่",
-            "ห้องครัว: เกาะอยู่ใกล้ตู้เย็น",
-            "สวนหน้าบ้าน: อยู่บนพุ่มไม้ดอกไม้ประดับ",
-            "ดาดฟ้าตึก: รับลมชมวิวอยู่บนแท็งก์น้ำ"
-        ];
+      // สุ่มสัตว์เลี้ยงของฝ่ายตรงข้าม (เลเวลสูสี +/- 1)
+      const oppLevel = Math.max(1, champion.level + Math.floor(Math.random() * 3) - 1);
+      const elementsList = ['ไฟ', 'น้ำ', 'พืช', 'ไฟฟ้า', 'หิน'];
+      const oppElement = elementsList[Math.floor(Math.random() * elementsList.length)];
+      const oppWeakness = ELEMENT_WEAKNESS[oppElement] || 'น้ำ';
 
-        const DOM = {
-            countCopper: document.getElementById('count-copper'),
-            countSilver: document.getElementById('count-silver'),
-            countGold: document.getElementById('count-gold'),
-            catchCount: document.getElementById('catch-count'),
-            playerCoins: document.getElementById('player-coins'),
-            foodCount: document.getElementById('food-count'),
-            bagCount: document.getElementById('bag-count'),
-            
-            radioCopper: document.getElementById('ball-copper'),
-            radioSilver: document.getElementById('ball-silver'),
-            radioGold: document.getElementById('ball-gold'),
+      const oppNames = ['ไฟมังกร', 'จิ้งจอกเพลิง', 'เต่าคลื่นวารี', 'โกเลมหินผา', 'หนูสายฟ้าฟาด', 'เถาวัลย์พฤกษา'];
+      const oppName = oppNames[Math.floor(Math.random() * oppNames.length)];
 
-            btnPlaySound: document.getElementById('btn-play-sound'),
-            btnReadTTS: document.getElementById('btn-read-tts'),
-            btnThrowBall: document.getElementById('btn-throw-ball'),
-            btnSearchAnother: document.getElementById('btn-search-another'),
-            btnOpenBag: document.getElementById('btn-open-bag'),
-            btnCloseBag: document.getElementById('btn-close-bag'),
-            btnBuyFood: document.getElementById('btn-buy-food'),
-            btnBuyFood5: document.getElementById('btn-buy-food-5'),
-            
-            shopModal: document.getElementById('shop-modal'),
-            btnOpenShop: document.getElementById('btn-open-shop'),
-            btnCloseShop: document.getElementById('btn-close-shop'),
-            btnQuickShop: document.getElementById('btn-quick-shop'),
+      const oppAtk = oppLevel * 5 + Math.floor(Math.random() * 8) + 12;
+      const oppHp = oppLevel * 8 + Math.floor(Math.random() * 12) + 25;
 
-            modal: document.getElementById('custom-modal'),
-            modalContent: document.getElementById('modal-content'),
-            modalIcon: document.getElementById('modal-icon'),
-            modalTitle: document.getElementById('modal-title'),
-            modalDesc: document.getElementById('modal-desc'),
-            btnModalClose: document.getElementById('btn-modal-close'),
+      matchedOpponent = {
+        trainerName: randomTrainer.trainerName,
+        trainerRank: randomTrainer.rank,
+        trainerGuild: randomTrainer.guild,
+        name: oppName,
+        level: oppLevel,
+        element: oppElement,
+        weakness: oppWeakness,
+        atk: oppAtk,
+        hp: oppHp
+      };
 
-            bagModal: document.getElementById('bag-modal'),
-            bagPokemonList: document.getElementById('bag-pokemon-list'),
-            
-            ttsMessageBlock: document.getElementById('tts-system-message'),
-            pokemonTitle: document.getElementById('pokemon-title'),
-            pokemonLocation: document.getElementById('pokemon-location'),
-            pokemonLevelBadge: document.getElementById('pokemon-level-badge'),
-            pokemonSvg: document.getElementById('pokemon-svg'),
-            encounterStatusBadge: document.getElementById('encounter-status-badge')
-        };
+      const titleElem = document.getElementById('screen-title');
+      const msgElem = document.getElementById('screen-message');
+      const area = document.getElementById('arena-interactive-area');
 
-        let audioCtx;
+      titleElem.textContent = '5. ลานประลอง (พบคู่ต่อสู้แล้ว!)';
+      msgElem.innerHTML = `
+        ⚔️ <strong>พบคู่ต่อสู้ออนไลน์แล้ว!</strong><br>
+        เทรนเนอร์: <strong>${matchedOpponent.trainerName}</strong> (${matchedOpponent.trainerRank})
+      `;
 
-        function speak(text) {
-            if ('speechSynthesis' in window) {
-                window.speechSynthesis.cancel();
-                const utterance = new SpeechSynthesisUtterance(text);
-                utterance.lang = 'th-TH';
-                utterance.rate = 0.9;
-                window.speechSynthesis.speak(utterance);
-            }
+      area.innerHTML = `
+        <div class="vs-match-card">
+          <div class="vs-duelists">
+            <div class="duelist-col">
+              <span class="duelist-trainer">คุณ</span>
+              <span class="duelist-pet">${champion.name}</span>
+              <span class="btn-tag">Lv.${champion.level} (ธาตุ${champion.element})</span>
+            </div>
+            <div class="vs-badge">VS</div>
+            <div class="duelist-col">
+              <span class="duelist-trainer">${matchedOpponent.trainerName}</span>
+              <span class="duelist-pet">${matchedOpponent.name}</span>
+              <span class="btn-tag">Lv.${matchedOpponent.level} (ธาตุ${matchedOpponent.element})</span>
+            </div>
+          </div>
+          <div style="font-size:0.8rem; color:#ef4444; font-weight:700;">
+            ⚠️ กฎ Permadeath: สัตว์เลี้ยงที่ HP หมดจะตายและถูกลบถาวร!
+          </div>
+        </div>
+
+        <button class="btn btn-arena-start" onclick="executeOnlineBattle()">
+          <span>⚔️ เริ่มการต่อสู้เดี๋ยวนี้!</span>
+          <span>&rarr;</span>
+        </button>
+        <button class="btn btn-secondary" onclick="changeChampion()">
+          🏃 ถอยทัพ / สละสิทธิ์
+        </button>
+      `;
+    }
+
+    // คำนวณผลการต่อสู้ทันทีหลังบ้านแบบไม่มี Log (Fast & Minimal Result)
+    function executeOnlineBattle() {
+      const champion = petInventory.find(p => p.id === selectedChampionId);
+      if (!champion || !matchedOpponent) {
+        changeChampion();
+        return;
+      }
+
+      const opponent = matchedOpponent;
+
+      // คำนวณความได้เปรียบธาตุ
+      let playerMultiplier = 1.0;
+      if (champion.element === opponent.weakness) {
+        playerMultiplier = 1.45;
+      } else if (opponent.element === champion.weakness) {
+        playerMultiplier = 0.8;
+      }
+
+      let enemyMultiplier = 1.0;
+      if (opponent.element === champion.weakness) {
+        enemyMultiplier = 1.45;
+      } else if (champion.element === opponent.weakness) {
+        enemyMultiplier = 0.8;
+      }
+
+      let playerHp = champion.hp;
+      let enemyHp = opponent.hp;
+
+      // จำลองการต่อสู้หลังบ้านทันทีโดยไม่มี Log
+      let round = 1;
+      while (playerHp > 0 && enemyHp > 0 && round <= 30) {
+        const pDamage = Math.max(1, Math.floor(champion.atk * playerMultiplier + (Math.random() * 4 - 2)));
+        enemyHp -= pDamage;
+        if (enemyHp <= 0) break;
+
+        const eDamage = Math.max(1, Math.floor(opponent.atk * enemyMultiplier + (Math.random() * 4 - 2)));
+        playerHp -= eDamage;
+        round++;
+      }
+
+      // ตัดสินผลแพ้-ชนะทันทีแบบสรุปสั้น
+      if (enemyHp <= 0) {
+        // --- ชนะ (Victory) ---
+        const rewardMoney = Math.floor(opponent.level * 100 + 150);
+        playerData.money += rewardMoney;
+
+        saveGame();
+        updateUI();
+
+        const victoryMsg = `
+          🎉 <strong>ชนะการประลอง!</strong><br>
+          คุณเอาชนะ ${opponent.trainerName} ได้สำเร็จ!<br>
+          <span style="color:#fbbf24; font-weight:800; font-size:1.15rem;">💰 ได้รับเงินรางวัล +${rewardMoney.toLocaleString()} G</span>
+        `;
+        renderArenaScreen(victoryMsg);
+        showAlert(`ชนะการประลอง! ได้รับ +${rewardMoney} G`, 'success');
+      } else {
+        // --- แพ้ (Permadeath) ---
+        const champName = champion.name;
+        const champIndex = petInventory.findIndex(p => p.id === champion.id);
+
+        // ลบสัตว์เลี้ยงออกจาก petInventory ถาวร
+        if (champIndex !== -1) {
+          petInventory.splice(champIndex, 1);
         }
+        selectedChampionId = null;
+        matchedOpponent = null;
 
-        function initAudio() {
-            if (!audioCtx) {
-                const AudioContext = window.AudioContext || window.webkitAudioContext;
-                audioCtx = new AudioContext();
-            }
-            if (audioCtx.state === 'suspended') {
-                audioCtx.resume();
-            }
-        }
+        saveGame();
+        updateUI();
 
-        function play3DBeep(panValue, pitchValue) {
-            initAudio();
-            const osc = audioCtx.createOscillator();
-            const panner = audioCtx.createStereoPanner();
-            const gainNode = audioCtx.createGain();
+        const defeatMsg = `
+          💀 <strong>แพ้การประลอง!</strong><br>
+          <span style="color:#ef4444; font-weight:800; font-size:1.05rem;">
+            ⚠️ สัตว์เลี้ยงของคุณ (${champName}) เสียชีวิตถาวรและถูกลบออกจากคลัง
+          </span>
+        `;
+        renderArenaScreen(defeatMsg);
+        showAlert(`แพ้การประลอง! ${champName} เสียชีวิตถาวร`, 'error');
+      }
+    }
 
-            osc.type = 'sine';
-            osc.frequency.value = pitchValue;
-            panner.pan.value = panValue;
+    // เรนเดอร์หน้าจอลานประลอง
+    function renderArenaScreen(customSummaryMessage = null) {
+      updateUI();
+      const area = document.getElementById('arena-interactive-area');
+      const titleElem = document.getElementById('screen-title');
+      const msgElem = document.getElementById('screen-message');
 
-            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
-            gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
-            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+      titleElem.textContent = '5. ลานประลอง (สู้ผู้เล่นจริง)';
 
-            osc.connect(panner);
-            panner.connect(gainNode);
-            gainNode.connect(audioCtx.destination);
+      if (petInventory.length === 0) {
+        msgElem.innerHTML = `
+          <span style="color:#f87171; font-weight:700;">ไม่มีสัตว์เลี้ยงในคลัง!</span><br>
+          คุณไม่มีสัตว์เลี้ยงสำหรับลงประลอง กรุณาไปจับสัตว์เลี้ยงก่อน
+        `;
+        area.innerHTML = `
+          <button class="btn btn-secondary" onclick="openMenu('catch')">
+            ไปที่สถานที่จับสัตว์เลี้ยง
+          </button>
+        `;
+        return;
+      }
 
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.35);
-        }
+      const champion = petInventory.find(p => p.id === selectedChampionId);
 
-        function generateRandomPokemon() {
-            const template = POKEMON_DATABASE[Math.floor(Math.random() * POKEMON_DATABASE.length)];
-            const location = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
-            
-            // Level distribution: 1-60 common, 61-90 uncommon, 91-100 rare
-            let level = 1;
-            const rand = Math.random() * 100;
-            if (rand < 60) level = Math.floor(Math.random() * 30) + 1;
-            else if (rand < 85) level = Math.floor(Math.random() * 30) + 31;
-            else if (rand < 95) level = Math.floor(Math.random() * 20) + 61;
-            else level = Math.floor(Math.random() * 20) + 81;
+      // กรณีแสดงหน้าจอสรุปผลสั้นๆ ทันที
+      if (customSummaryMessage) {
+        msgElem.innerHTML = customSummaryMessage;
+        area.innerHTML = `
+          ${champion ? `
+            <button class="btn btn-arena-start" onclick="startMatchmaking()">
+              <span>🌐 หาคู่ต่อสู้คนต่อไป (Matchmaking)</span>
+              <span>&rarr;</span>
+            </button>
+            <button class="btn btn-secondary" onclick="changeChampion()">
+              🔄 เปลี่ยนตัวแทน
+            </button>
+          ` : `
+            <button class="btn btn-secondary" onclick="changeChampion()">
+              ⚔️ เลือกตัวแทนตัวใหม่
+            </button>
+          `}
+          <button class="btn btn-secondary" onclick="goBack()">
+            🔙 กลับสู่หน้าหลัก
+          </button>
+        `;
+        return;
+      }
 
-            state.currentPokemon = {
-                id: Date.now() + Math.random(),
-                name: template.name,
-                level: level,
-                locationText: location,
-                iconSvg: template.iconSvg,
-                color: template.color,
-                audio: { pan: (Math.random() * 1.6) - 0.8, pitch: 200 + (level * 5) },
-                introText: `พบ ${template.name} ! โปเกมอนเลเวล ${level} สถานที่: ${location}`
-            };
-            state.isCaught = false;
+      // ถ้ายังไม่ได้เลือกตัวแทน -> แสดงรายชื่อในคลัง
+      if (!champion) {
+        msgElem.innerHTML = `
+          <span style="color:#f87171; font-weight:700;">⚠️ กฎ Permadeath: แพ้แล้วตายถาวร!</span><br>
+          กรุณาเลือก 1 ตัวแทนจากคลัง เพื่อส่งลงสนามแข่งออนไลน์:
+        `;
 
-            updateEncounterUI();
-            speak(state.currentPokemon.introText);
-        }
-
-        function updateEncounterUI() {
-            const p = state.currentPokemon;
-            DOM.pokemonTitle.textContent = p.name;
-            DOM.pokemonLocation.textContent = `พบที่ ${p.locationText}`;
-            DOM.pokemonLevelBadge.textContent = `เลเวล: ${p.level}`;
-            DOM.pokemonSvg.innerHTML = p.iconSvg;
-            DOM.pokemonSvg.className = `h-14 w-14 ${p.color}`;
-            DOM.ttsMessageBlock.textContent = p.introText;
-            DOM.encounterStatusBadge.textContent = "พบแล้ว!";
-            DOM.encounterStatusBadge.className = "absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap";
-            DOM.btnThrowBall.disabled = false;
-        }
-
-        function updateShopUI() {
-            const elCoins = document.getElementById('shop-player-coins');
-            const elCopper = document.getElementById('shop-count-copper');
-            const elSilver = document.getElementById('shop-count-silver');
-            const elGold = document.getElementById('shop-count-gold');
-            if (elCoins) elCoins.textContent = state.coins;
-            if (elCopper) elCopper.textContent = state.inventory.copper;
-            if (elSilver) elSilver.textContent = state.inventory.silver;
-            if (elGold) elGold.textContent = state.inventory.gold;
-        }
-
-        function openShop() {
-            updateShopUI();
-            DOM.shopModal.classList.remove('hidden');
-            DOM.shopModal.setAttribute('aria-hidden', 'false');
-            speak(`ยินดีต้อนรับสู่ร้านค้าโปเกบอล คุณมี ${state.coins} เหรียญ`);
-        }
-
-        function closeShop() {
-            DOM.shopModal.classList.add('hidden');
-            DOM.shopModal.setAttribute('aria-hidden', 'true');
-        }
-
-        function buyBall(type, amount, cost) {
-            const ballNames = {
-                copper: 'บอลทองแดง',
-                silver: 'บอลเงิน',
-                gold: 'บอลทองคำ'
-            };
-            const name = ballNames[type] || type;
-
-            if (state.coins < cost) {
-                const msg = `เหรียญไม่พอซื้อ ${name}! ต้องการ ${cost} เหรียญ แต่คุณมี ${state.coins} เหรียญ (สามารถหาเหรียญเพิ่มได้โดยการขายโปเกมอนในคลัง)`;
-                showModal('error', 'เหรียญไม่พอ!', msg);
-                speak(`เหรียญไม่พอซื้อ ${name} ครับ ต้องการ ${cost} เหรียญ`);
-                return;
-            }
-
-            state.coins -= cost;
-            state.inventory[type] += amount;
-            
-            speak(`ซื้อ ${name} จำนวน ${amount} ลูก สำเร็จ จ่าย ${cost} เหรียญ`);
-            updateInventoryUI();
-            updateShopUI();
-        }
-
-        function updateInventoryUI() {
-            DOM.countCopper.textContent = `x${state.inventory.copper}`;
-            DOM.countSilver.textContent = `x${state.inventory.silver}`;
-            DOM.countGold.textContent = `x${state.inventory.gold}`;
-            DOM.catchCount.textContent = `จับได้สะสม: ${state.caughtCount} ตัว`;
-            DOM.playerCoins.textContent = state.coins;
-            DOM.foodCount.textContent = state.foodCount;
-            DOM.bagCount.textContent = state.bag.length;
-
-            if (state.inventory.copper <= 0) DOM.radioCopper.disabled = true;
-            else DOM.radioCopper.disabled = false;
-
-            if (state.inventory.silver <= 0) DOM.radioSilver.disabled = true;
-            else DOM.radioSilver.disabled = false;
-
-            if (state.inventory.gold <= 0) DOM.radioGold.disabled = true;
-            else DOM.radioGold.disabled = false;
-            
-            const selected = document.querySelector('input[name="ball_type"]:checked');
-            if (selected && selected.disabled) {
-                if (!DOM.radioCopper.disabled) DOM.radioCopper.checked = true;
-                else if (!DOM.radioSilver.disabled) DOM.radioSilver.checked = true;
-                else if (!DOM.radioGold.disabled) DOM.radioGold.checked = true;
-            }
-
-            updateShopUI();
-        }
-
-        function showModal(type, title, desc) {
-            DOM.modalTitle.textContent = title;
-            DOM.modalDesc.textContent = desc;
-            
-            if (type === 'success') {
-                DOM.modalIcon.innerHTML = `<div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center"><svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>`;
-                DOM.modalTitle.className = "text-2xl font-bold text-emerald-400 mb-2";
-            } else {
-                DOM.modalIcon.innerHTML = `<div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center"><svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>`;
-                DOM.modalTitle.className = "text-2xl font-bold text-red-400 mb-2";
-            }
-
-            DOM.modal.classList.remove('hidden');
-            DOM.modalContent.classList.add('modal-animate');
-            DOM.modal.setAttribute('aria-hidden', 'false');
-            DOM.btnModalClose.onclick = hideModal;
-            DOM.btnModalClose.focus();
-        }
-
-        function hideModal() {
-            DOM.modal.classList.add('hidden');
-            DOM.modalContent.classList.remove('modal-animate');
-            DOM.modal.setAttribute('aria-hidden', 'true');
-        }
-
-        function attemptCatch() {
-            if (state.isCaught) {
-                speak("ตัวนี้ถูกจับไปแล้ว กรุณาหาตัวใหม่ครับ");
-                return;
-            }
-
-            const totalBalls = state.inventory.copper + state.inventory.silver + state.inventory.gold;
-            if (totalBalls <= 0) {
-                const msg = "คุณไม่มีลูกบอลเหลืออยู่เลย! กรุณาเปิดร้านค้าเพื่อซื้อบอลเพิ่มด้วยเหรียญ";
-                showModal('error', 'บอลหมดเกลี้ยง!', msg);
-                speak("คุณไม่มีลูกบอลเหลืออยู่เลยครับ กรุณาเปิดร้านค้าเพื่อซื้อบอล");
-                DOM.btnModalClose.onclick = () => {
-                    hideModal();
-                    openShop();
-                };
-                return;
-            }
-
-            const selectedBall = document.querySelector('input[name="ball_type"]:checked');
-            if (!selectedBall) {
-                const msg = "กรุณาเลือกชนิดลูกบอลที่ต้องการขว้าง";
-                showModal('error', 'ยังไม่ได้เลือกบอล!', msg);
-                speak(msg);
-                return;
-            }
-
-            const ballType = selectedBall.value;
-            const ballNameTh = ballType === 'copper' ? 'บอลทองแดง' : (ballType === 'silver' ? 'บอลเงิน' : 'บอลทองคำ');
-            if (state.inventory[ballType] <= 0) {
-                const msg = `${ballNameTh} หมดแล้ว! กรุณาเลือกบอลชนิดอื่น หรือเปิดร้านค้าเพื่อซื้อเพิ่ม`;
-                showModal('error', `${ballNameTh} หมด!`, msg);
-                speak(`${ballNameTh} หมดแล้วครับ กรุณาซื้อเพิ่ม`);
-                DOM.btnModalClose.onclick = () => {
-                    hideModal();
-                    openShop();
-                };
-                return;
-            }
-
-            // Deduct Ball
-            state.inventory[ballType]--;
-            updateInventoryUI();
-
-            DOM.btnThrowBall.disabled = true;
-            DOM.btnThrowBall.innerHTML = `<svg class="animate-spin h-5 w-5 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> กำลังลุ้น...`;
-
-            setTimeout(() => {
-                DOM.btnThrowBall.disabled = false;
-                DOM.btnThrowBall.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><circle cx="12" cy="12" r="4" stroke-width="2"></circle></svg> ขว้างบอลจับ!`;
-
-                // Harder & more challenging catch formula:
-                // Copper: 42% base, 0.48 penalty per level, min 5%
-                // Silver: 65% base, 0.35 penalty per level, min 15%
-                // Gold: 85% base, 0.20 penalty per level, min 25%
-                let baseChance = 42;
-                let penaltyRate = 0.48;
-                let minChance = 5;
-
-                if (ballType === 'silver') {
-                    baseChance = 65;
-                    penaltyRate = 0.35;
-                    minChance = 15;
-                } else if (ballType === 'gold') {
-                    baseChance = 85;
-                    penaltyRate = 0.20;
-                    minChance = 25;
-                }
-
-                const levelPenalty = (state.currentPokemon.level - 1) * penaltyRate;
-                const catchChance = Math.max(minChance, Math.round(baseChance - levelPenalty));
-
-                const roll = Math.random() * 100;
-                
-                if (roll <= catchChance) {
-                    // SUCCESS
-                    state.isCaught = true;
-                    state.caughtCount++;
-                    
-                    // Add to Bag
-                    state.bag.push({
-                        ...state.currentPokemon,
-                        growth: 0, // 0 to 100%
-                        caughtAt: Date.now()
-                    });
-
-                    updateInventoryUI();
-                    
-                    DOM.ttsMessageBlock.textContent = `จับสำเร็จแล้ว! คุณใช้ ${ballNameTh} จับ ${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} เข้าคลังสำเร็จ!`;
-                    DOM.encounterStatusBadge.textContent = "จับแล้วในคลัง!";
-                    DOM.encounterStatusBadge.className = "absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap";
-
-                    const title = "จับสำเร็จ!";
-                    const desc = `ยอดเยี่ยม! คุณใช้${ballNameTh}จับ ${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} สำเร็จเรียบร้อย! ไปที่คลังเพื่อเลี้ยงหรือขายได้เลย`;
-                    
-                    showModal('success', title, desc);
-                    speak(desc);
-                    
-                    DOM.btnModalClose.onclick = () => {
-                        hideModal();
-                        generateRandomPokemon(); // Automatically spawn next
-                    };
-                } else {
-                    // FAIL - Chance to flee scales with level: 12% + (level * 0.25)%
-                    const fleeChance = 12 + (state.currentPokemon.level * 0.25);
-                    const didFlee = (Math.random() * 100) < fleeChance;
-
-                    if (didFlee) {
-                        DOM.ttsMessageBlock.textContent = `แย่แล้ว! ${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} ดิ้นหลุดและวิ่งหนีหายไปแล้ว!`;
-                        DOM.encounterStatusBadge.textContent = "หนีไปแล้ว!";
-                        DOM.encounterStatusBadge.className = "absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-rose-700 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap";
-
-                        const title = "โปเกมอนหนีไปแล้ว!";
-                        const desc = `${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} ตกใจและวิ่งหนีหายไปเข้าป่าแล้ว! (ควรเตรียมบอลระดับสูงไว้เพื่อเพิ่มโอกาสจับสำเร็จ)`;
-
-                        showModal('error', title, desc);
-                        speak(`${state.currentPokemon.name} หนีไปแล้วครับ กำลังค้นหาตัวใหม่`);
-
-                        DOM.btnModalClose.onclick = () => {
-                            hideModal();
-                            generateRandomPokemon();
-                        };
-                    } else {
-                        DOM.ttsMessageBlock.textContent = `พลาดเป้า! โปเกมอนเลเวล ${state.currentPokemon.level} ดิ้นหลุดจาก${ballNameTh} โอกาสจับรอบนี้คือ ${catchChance}% ลองขว้างใหม่อีกครั้ง`;
-
-                        const title = "ดิ้นหลุดออกมาได้!";
-                        const desc = `โปเกมอนเลเวล ${state.currentPokemon.level} แข็งแกร่งมาก ดิ้นหลุดจาก${ballNameTh} (โอกาสจับ ${catchChance}%)! ลองเลือกบอลที่ดีขึ้นหรือลองใหม่อีกครั้ง`;
-
-                        showModal('error', title, desc);
-                        speak(desc);
-
-                        DOM.btnModalClose.onclick = () => {
-                            hideModal();
-                            DOM.btnThrowBall.focus();
-                        };
-                    }
-                }
-            }, 1200);
-        }
-
-        const FOOD_PRICE = 20;
-
-        function getPokemonSellPrice(poke) {
-            const growthBonus = (poke.growth || 0) / 100;
-            return Math.floor((10 + poke.level * 10) * (1 + growthBonus));
-        }
-
-        function buyFood(amount = 1) {
-            const totalCost = FOOD_PRICE * amount;
-            if (state.coins < totalCost) {
-                const msg = `เหรียญไม่พอซื้ออาหาร! ต้องการ ${totalCost} เหรียญ แต่คุณมี ${state.coins} เหรียญ`;
-                showModal('error', 'เหรียญไม่พอ!', msg);
-                speak(`เหรียญไม่พอซื้ออาหารครับ ต้องการ ${totalCost} เหรียญ`);
-                return;
-            }
-            state.coins -= totalCost;
-            state.foodCount += amount;
-            speak(`ซื้ออาหารสำเร็จ ${amount} ชิ้น เสีย ${totalCost} เหรียญ`);
-            updateInventoryUI();
-            renderBagList();
-        }
-
-        function renderBagList() {
-            DOM.bagPokemonList.innerHTML = '';
-            if (state.bag.length === 0) {
-                DOM.bagPokemonList.innerHTML = `<p class="text-center text-slate-400 py-6">คลังยังว่างเปล่า ออกไปจับโปเกมอนกันเลย!</p>`;
-                return;
-            }
-
-            state.bag.forEach((poke, index) => {
-                const card = document.createElement('div');
-                card.className = "bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2";
-                
-                const sellPrice = getPokemonSellPrice(poke);
-
-                card.innerHTML = `
-                    <div class="flex justify-between items-center">
-                        <div class="flex items-center gap-2">
-                            <span class="text-xl">${poke.name.split(' ')[0]}</span>
-                            <div>
-                                <h4 class="font-bold text-white text-sm">${poke.name}</h4>
-                                <span class="text-xs text-purple-300">เลเวล ${poke.level}</span>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-2">
-                            <button data-index="${index}" class="feed-btn bg-amber-600 hover:bg-amber-500 active:scale-95 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition">
-                                🍖 ให้อาหาร (${state.foodCount})
-                            </button>
-                            <button data-index="${index}" class="sell-btn bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition">
-                                💰 ขาย (${sellPrice} เหรียญ)
-                            </button>
-                        </div>
-                    </div>
-                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
-                        <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${poke.growth}%"></div>
-                    </div>
-                    <div class="flex justify-between text-[11px] text-slate-400">
-                        <span>ความเติบโต: ${Math.floor(poke.growth)}%</span>
-                        <span>มูลค่าปัจจุบัน: ${sellPrice} เหรียญ</span>
-                    </div>
-                `;
-                DOM.bagPokemonList.appendChild(card);
-            });
-
-            // Bind feed/sell actions
-            document.querySelectorAll('.feed-btn').forEach(btn => {
-                btn.onclick = (e) => {
-                    const idx = parseInt(e.target.getAttribute('data-index'));
-                    feedPokemon(idx);
-                };
-            });
-
-            document.querySelectorAll('.sell-btn').forEach(btn => {
-                btn.onclick = (e) => {
-                    const idx = parseInt(e.target.getAttribute('data-index'));
-                    sellPokemon(idx);
-                };
-            });
-        }
-
-        function feedPokemon(index) {
-            if (state.foodCount <= 0) {
-                showModal('error', 'อาหารหมด!', 'อาหารเร่งโตหมดแล้ว กรุณากดซื้ออาหารด้านบน');
-                speak("อาหารหมดแล้ว! กรุณาซื้ออาหารเพิ่ม");
-                return;
-            }
-            state.foodCount--;
-            state.bag[index].growth = Math.min(100, state.bag[index].growth + 25);
-            if (state.bag[index].growth >= 100) {
-                state.bag[index].growth = 0;
-                state.bag[index].level += 1;
-                speak(`ยินดีด้วย! ${state.bag[index].name} เลเวลอัพเป็น ${state.bag[index].level} แล้ว!`);
-            } else {
-                speak("ให้อาหารสำเร็จ โตไวขึ้น!");
-            }
-            updateInventoryUI();
-            renderBagList();
-        }
-
-        function sellPokemon(index) {
-            const poke = state.bag[index];
-            const price = getPokemonSellPrice(poke);
-            state.coins += price;
-            state.bag.splice(index, 1);
-            speak(`ขาย ${poke.name} เรียบร้อย ได้รับ ${price} เหรียญ`);
-            updateInventoryUI();
-            renderBagList();
-        }
-
-        // Background passive growth timer (slow growth over time)
-        setInterval(() => {
-            if (state.bag.length > 0) {
-                state.bag.forEach(poke => {
-                    if (poke.growth < 100) {
-                        poke.growth = Math.min(100, poke.growth + 0.5);
-                    }
-                });
-                if (!DOM.bagModal.classList.contains('hidden')) {
-                    renderBagList();
-                }
-            }
-        }, 3000);
-
-        // Event Listeners
-        DOM.btnPlaySound.addEventListener('click', () => {
-            if (state.currentPokemon) {
-                play3DBeep(state.currentPokemon.audio.pan, state.currentPokemon.audio.pitch);
-                speak("เสียงทิศทางโปเกมอน");
-            }
+        let listHtml = '<div class="inventory-scroll">';
+        petInventory.forEach(pet => {
+          listHtml += `
+            <div class="pet-card">
+              <div class="pet-info">
+                <div class="pet-name-line">
+                  <span>${pet.name}</span>
+                  <span class="btn-tag">ธาตุ${pet.element}</span>
+                </div>
+                <div class="pet-stat-line">
+                  เลเวล: ${pet.level}, ธาตุ: ${pet.element}, ATK: ${pet.atk}, HP: ${pet.hp}, แพ้ทาง: ${pet.weakness}
+                </div>
+              </div>
+              <div class="pet-action-row">
+                <button class="btn-choose-champ" onclick="selectChampion(${pet.id})">
+                  ⚔️ เลือกตัวนี้ลงแข่ง
+                </button>
+              </div>
+            </div>
+          `;
         });
+        listHtml += '</div>';
 
-        DOM.btnReadTTS.addEventListener('click', () => {
-            if (state.currentPokemon) {
-                speak(state.currentPokemon.introText);
-            }
-        });
+        area.innerHTML = listHtml;
+        return;
+      }
 
-        DOM.btnThrowBall.addEventListener('click', attemptCatch);
+      // ถ้าเลือกตัวแทนแล้ว -> แสดงปุ่มเริ่ม Matchmaking
+      msgElem.innerHTML = `
+        <strong>🛡️ ตัวแทนของคุณ: ${champion.name} Lv.${champion.level}</strong><br>
+        ธาตุ: ${champion.element} | ATK: ${champion.atk} | HP: ${champion.hp}<br>
+        <span style="color:#94a3b8; font-size:0.86rem;">พร้อมเข้าสู่ระบบค้นหาคู่ต่อสู้แบบออนไลน์!</span>
+      `;
 
-        DOM.btnSearchAnother.addEventListener('click', () => {
-            speak("กำลังหาตัวใหม่...");
-            generateRandomPokemon();
-        });
+      area.innerHTML = `
+        <button class="btn btn-arena-start" onclick="startMatchmaking()">
+          <span>🌐 ค้นหาคู่ต่อสู้ออนไลน์ (Matchmaking)</span>
+          <span>&rarr;</span>
+        </button>
+        <button class="btn btn-secondary" onclick="changeChampion()">
+          🔄 เปลี่ยนตัวแทน
+        </button>
+      `;
+    }
 
-        DOM.btnOpenBag.addEventListener('click', () => {
-            renderBagList();
-            DOM.bagModal.classList.remove('hidden');
-            DOM.bagModal.setAttribute('aria-hidden', 'false');
-        });
+    // --- ระบบนำทางหน้าจอ (Screen Switching) ---
+    function openMenu(menuType) {
+      currentScreen = menuType;
+      document.getElementById('alert-box').innerHTML = '';
+      cancelMatchmaking();
 
-        DOM.btnCloseBag.addEventListener('click', () => {
-            DOM.bagModal.classList.add('hidden');
-            DOM.bagModal.setAttribute('aria-hidden', 'true');
-        });
+      document.getElementById('panel-main').style.display = 'none';
+      document.getElementById('panel-shop').style.display = 'none';
+      document.getElementById('panel-petshop').style.display = 'none';
+      document.getElementById('panel-inventory').style.display = 'none';
+      document.getElementById('panel-catch').style.display = 'none';
+      document.getElementById('panel-arena').style.display = 'none';
 
-        DOM.btnBuyFood.addEventListener('click', () => buyFood(1));
-        if (DOM.btnBuyFood5) {
-            DOM.btnBuyFood5.addEventListener('click', () => buyFood(5));
-        }
+      const titleElem = document.getElementById('screen-title');
+      const msgElem = document.getElementById('screen-message');
 
-        if (DOM.btnOpenShop) DOM.btnOpenShop.addEventListener('click', openShop);
-        if (DOM.btnCloseShop) DOM.btnCloseShop.addEventListener('click', closeShop);
-        if (DOM.btnQuickShop) DOM.btnQuickShop.addEventListener('click', openShop);
+      switch (menuType) {
+        case 'shop':
+          titleElem.textContent = '1. ร้านค้า';
+          msgElem.innerHTML = 'ยินดีต้อนรับสู่ร้านค้า Pokeball!<br>แตะปุ่มเพื่อซื้อไอเทมที่ต้องการ';
+          document.getElementById('panel-shop').style.display = 'flex';
+          renderShop();
+          break;
 
-        DOM.btnModalClose.onclick = hideModal;
+        case 'petshop':
+          titleElem.textContent = '2. ร้านสัตว์เลี้ยง';
+          msgElem.innerHTML = 'ยินดีต้อนรับสู่ร้านอาหารสัตว์เลี้ยง!<br>เลือกซื้ออาหารตามธาตุเพื่อเพิ่มเลเวลสัตว์เลี้ยงของคุณ';
+          document.getElementById('panel-petshop').style.display = 'flex';
+          renderPetShop();
+          break;
 
-        window.onload = () => {
-            updateInventoryUI();
-            generateRandomPokemon();
-        };
-    </script>
+        case 'inventory':
+          titleElem.textContent = '3. คลังสัตว์เลี้ยง';
+          msgElem.innerHTML = `รายการสัตว์เลี้ยงทั้งหมดในครอบครอง (${petInventory.length} ตัว)<br>กดปุ่มให้อาหารเพื่อเพิ่มเลเวลหรือขายเพื่อรับเหรียญ`;
+          document.getElementById('panel-inventory').style.display = 'flex';
+          renderInventory();
+          break;
+
+        case 'catch':
+          document.getElementById('panel-catch').style.display = 'flex';
+          renderCatchScreen();
+          break;
+
+        case 'arena':
+          document.getElementById('panel-arena').style.display = 'flex';
+          renderArenaScreen();
+          break;
+
+        default:
+          goBack();
+          return;
+      }
+
+      updateUI();
+    }
+
+    // ย้อนกลับสู่หน้าจอหลัก
+    function goBack() {
+      currentScreen = 'main';
+      document.getElementById('alert-box').innerHTML = '';
+      cancelMatchmaking();
+
+      document.getElementById('panel-main').style.display = 'flex';
+      document.getElementById('panel-shop').style.display = 'none';
+      document.getElementById('panel-petshop').style.display = 'none';
+      document.getElementById('panel-inventory').style.display = 'none';
+      document.getElementById('panel-catch').style.display = 'none';
+      document.getElementById('panel-arena').style.display = 'none';
+
+      document.getElementById('screen-title').textContent = 'หน้าหลัก';
+      document.getElementById('screen-message').innerHTML = 'ยินดีต้อนรับสู่ Monster Quest!<br>กรุณาเลือกเมนูที่ต้องการทำรายการ';
+
+      updateUI();
+    }
+
+    // เริ่มต้นทำงานเมื่อเปิดหน้าเว็บ
+    window.addEventListener('DOMContentLoaded', () => {
+      loadGame();
+    });
+  </script>
 </body>
 </html>

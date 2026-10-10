@@ -1,0 +1,952 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pokémon Sightless Catcher</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Sarabun', sans-serif;
+            background-color: #0f172a; /* bg-slate-900 */
+            color: #f8fafc; /* text-slate-50 */
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            min-height: 100vh;
+        }
+
+        /* Focus rings for Accessibility */
+        *:focus-visible {
+            outline: 4px solid #38bdf8;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+
+        /* Custom Radio Button styling for Inventory */
+        .ball-radio {
+            display: none;
+        }
+
+        .ball-label {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 0.75rem;
+            border-radius: 0.75rem; /* rounded-xl */
+            border: 2px solid #334155; /* border-slate-700 */
+            background-color: #1e293b; /* bg-slate-800 */
+            cursor: pointer;
+            transition: all 0.2s;
+            height: 100%;
+        }
+
+        .ball-radio:checked + .ball-label {
+            border-color: #f59e0b; /* border-amber-500 / orange */
+            background-color: rgba(245, 158, 11, 0.1);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.3);
+        }
+
+        .ball-radio:disabled + .ball-label {
+            opacity: 0.5;
+            cursor: not-allowed;
+            border-color: #ef4444 !important;
+        }
+
+        /* Custom Modal Animation */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .modal-animate {
+            animation: fadeIn 0.3s ease-out forwards;
+        }
+
+        /* Avatar pulse */
+        @keyframes gentlePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        .avatar-pulse {
+            animation: gentlePulse 3s infinite;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+
+    <main class="w-full max-w-xl flex flex-col gap-4 pb-12" aria-live="polite" id="game-container">
+        
+        <!-- Top Navigation / Resource Bar -->
+        <div class="flex items-center justify-between border border-slate-700 rounded-2xl bg-slate-800/80 px-4 py-3 shadow-md">
+            <div class="flex items-center gap-2">
+                <span class="text-amber-400 font-bold text-lg flex items-center gap-1">
+                    🪙 <span id="player-coins">100</span> เหรียญ
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <button id="btn-open-shop" class="bg-amber-600 hover:bg-amber-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs md:text-sm transition-transform active:scale-95 flex items-center gap-1.5 shadow">
+                    🏪 ร้านค้าซื้อบอล
+                </button>
+                <button id="btn-open-bag" class="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1.5 rounded-xl text-xs md:text-sm transition-transform active:scale-95 flex items-center gap-1.5 shadow">
+                    🎒 คลัง (<span id="bag-count">0</span>)
+                </button>
+            </div>
+        </div>
+
+        <!-- Header & TTS Block -->
+        <div class="border border-slate-700 rounded-2xl bg-slate-800/50 p-4 shadow-md">
+            <h1 class="text-xl font-bold flex items-center justify-center gap-2 text-yellow-500 mb-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M11 5L6 9H2v6h4l5 4V5z"></path>
+                    <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                </svg>
+                โปเกมอน ซาวด์แคชเชอร์
+            </h1>
+            <p id="tts-system-message" class="text-slate-300 text-sm md:text-base text-center leading-relaxed">
+                กำลังค้นหาโปเกมอนป่า...
+            </p>
+        </div>
+
+        <!-- Main Encounter Display -->
+        <section id="encounter-section" class="bg-slate-800 border border-slate-700 rounded-3xl p-6 flex flex-col items-center shadow-lg relative">
+            <!-- Circular Avatar -->
+            <div class="relative mb-3 avatar-pulse">
+                <div class="w-24 h-24 rounded-full border-4 border-emerald-700 bg-slate-900 flex items-center justify-center relative z-10" id="pokemon-icon-container">
+                    <!-- Bug Icon default -->
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-14 w-14 text-lime-500" viewBox="0 0 24 24" fill="currentColor" id="pokemon-svg">
+                        <path d="M8 9a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm-4-3a5.006 5.006 0 0 0-4.9 4H5a1 1 0 0 0 0 2h1.27a4.975 4.975 0 0 0 0 2H5a1 1 0 0 0 0 2h2.2a5 5 0 0 0 9.6 0H19a1 1 0 0 0 0-2h-1.27a4.975 4.975 0 0 0 0-2H19a1 1 0 0 0 0-2h-1.1A5.006 5.006 0 0 0 12 6zm0 10a3 3 0 1 1 3-3 3 3 0 0 1-3 3z"/>
+                    </svg>
+                </div>
+                <div id="encounter-status-badge" class="absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap">
+                    พบแล้ว!
+                </div>
+            </div>
+
+            <!-- Level Badge -->
+            <div id="pokemon-level-badge" class="bg-purple-900 text-purple-200 text-xs font-bold px-4 py-1 rounded-full mb-2 border border-purple-700">
+                เลเวล: 1
+            </div>
+
+            <!-- Title -->
+            <h2 id="pokemon-title" class="text-2xl md:text-3xl font-bold text-white mb-3 text-center">คัตเตอร์ปี (Caterpie)</h2>
+
+            <!-- Location Box -->
+            <div class="bg-slate-900 w-full rounded-xl py-3 px-4 text-center border border-slate-700 mb-4">
+                <p id="pokemon-location" class="text-yellow-400 font-semibold text-base md:text-lg">พบที่ ระเบียงบ้าน: เกาะอยู่บนกระถางต้นไม้ริมระเบียง</p>
+            </div>
+
+            <!-- Search Another Button (when ignoring current) -->
+            <button id="btn-search-another" class="w-full bg-slate-700 hover:bg-slate-600 text-slate-200 font-semibold py-2.5 rounded-xl text-sm transition-transform active:scale-95 border border-slate-600 flex items-center justify-center gap-2">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+                ปล่อยผ่านแล้วหาตัวใหม่ (เสียเวลาเล็กน้อย)
+            </button>
+        </section>
+
+        <!-- Inventory Box -->
+        <section class="bg-slate-800 border border-slate-700 rounded-3xl p-4 shadow-lg">
+            <div class="flex flex-wrap gap-2 justify-between items-center mb-3">
+                <h3 class="text-base md:text-lg font-bold flex items-center gap-2 text-white">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-slate-300" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M10 2a4 4 0 00-4 4v1H5a1 1 0 00-.994.89l-1 9A1 1 0 004 18h12a1 1 0 00.994-1.11l-1-9A1 1 0 0015 7h-1V6a4 4 0 00-4-4zm2 5V6a2 2 0 10-4 0v1h4zm-6 3a1 1 0 112 0 1 1 0 01-2 0zm7-1a1 1 0 100 2 1 1 0 000-2z" clip-rule="evenodd" />
+                    </svg>
+                    กระเป๋าบอล:
+                </h3>
+                <div class="flex items-center gap-2">
+                    <button id="btn-quick-shop" class="bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs px-2.5 py-1 rounded-lg transition active:scale-95 flex items-center gap-1 shadow">
+                        🏪 ซื้อบอลเพิ่ม
+                    </button>
+                    <span id="catch-count" class="text-emerald-400 font-bold text-xs md:text-sm">จับได้: 0 ตัว</span>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-3 gap-3" role="radiogroup" aria-labelledby="ball-selection">
+                <!-- Copper Ball -->
+                <div class="relative">
+                    <input type="radio" name="ball_type" id="ball-copper" value="copper" class="ball-radio" checked>
+                    <label for="ball-copper" class="ball-label" aria-label="บอลทองแดง มี 6 ลูก เหมาะสำหรับเลเวลต่ำ">
+                        <div class="w-6 h-6 rounded-full bg-orange-500 mb-1 shadow-inner"></div>
+                        <span class="font-bold text-orange-400 text-sm">ทองแดง</span>
+                        <span id="count-copper" class="text-xs text-slate-400 mt-0.5">x6</span>
+                    </label>
+                </div>
+
+                <!-- Silver Ball -->
+                <div class="relative">
+                    <input type="radio" name="ball_type" id="ball-silver" value="silver" class="ball-radio">
+                    <label for="ball-silver" class="ball-label" aria-label="บอลเงิน มี 2 ลูก สมดุลดี">
+                        <div class="w-6 h-6 rounded-full bg-slate-300 mb-1 shadow-inner"></div>
+                        <span class="font-bold text-white text-sm">เงิน</span>
+                        <span id="count-silver" class="text-xs text-slate-400 mt-0.5">x2</span>
+                    </label>
+                </div>
+
+                <!-- Gold Ball -->
+                <div class="relative">
+                    <input type="radio" name="ball_type" id="ball-gold" value="gold" class="ball-radio">
+                    <label for="ball-gold" class="ball-label" aria-label="บอลทองคำ มี 1 ลูก โอกาสจับสูงมาก">
+                        <div class="w-6 h-6 rounded-full bg-yellow-400 mb-1 shadow-inner"></div>
+                        <span class="font-bold text-yellow-400 text-sm">ทองคำ</span>
+                        <span id="count-gold" class="text-xs text-slate-400 mt-0.5">x1</span>
+                    </label>
+                </div>
+            </div>
+        </section>
+
+        <!-- Controls -->
+        <div class="flex flex-col gap-3">
+            <!-- Play Direction Button -->
+            <button id="btn-play-sound" class="w-full bg-[#10b981] hover:bg-[#059669] text-white font-bold text-lg md:text-xl py-3.5 rounded-2xl shadow-lg transition-transform active:scale-95 flex items-center justify-center gap-2 border-b-4 border-[#047857]">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                </svg>
+                กดเพื่อฟังทิศทางอีกครั้ง
+            </button>
+
+            <!-- Bottom Row Buttons -->
+            <div class="grid grid-cols-2 gap-3">
+                <button id="btn-read-tts" class="bg-slate-700 hover:bg-slate-600 text-white font-bold text-sm md:text-base py-3.5 rounded-xl shadow transition-transform active:scale-95 border-b-4 border-slate-900 flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon>
+                        <path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path>
+                    </svg>
+                    ฟังพิกัดอีกครั้ง
+                </button>
+
+                <button id="btn-throw-ball" class="bg-[#b91c1c] hover:bg-[#991b1b] text-white font-bold text-sm md:text-base py-3.5 rounded-xl shadow transition-transform active:scale-95 border-b-4 border-[#7f1d1d] flex items-center justify-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" stroke-width="2"></circle>
+                        <circle cx="12" cy="12" r="4" stroke-width="2"></circle>
+                    </svg>
+                    ขว้างบอลจับ!
+                </button>
+            </div>
+        </div>
+
+    </main>
+
+    <!-- Pokémon Bag Modal -->
+    <div id="bag-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" aria-hidden="true">
+        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-4 pb-2 border-b border-slate-700">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    🎒 คลังโปเกมอนของคุณ
+                </h2>
+                <button id="btn-close-bag" class="text-slate-400 hover:text-white font-bold text-lg p-1">✕</button>
+            </div>
+
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 mb-3 text-sm bg-slate-900/60 p-2.5 rounded-xl border border-slate-700">
+                <div class="flex flex-col">
+                    <span class="text-slate-200 font-semibold">🍖 อาหารเร่งโต (ราคา 20 เหรียญ / ชิ้น)</span>
+                    <span class="text-xs text-slate-400">มีอยู่ในกระเป๋า: <span id="food-count" class="font-bold text-amber-400">3</span> ชิ้น</span>
+                </div>
+                <div class="flex items-center gap-2 w-full sm:w-auto">
+                    <button id="btn-buy-food" class="flex-1 sm:flex-none bg-emerald-600 hover:bg-emerald-500 active:scale-95 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
+                        🪙 ซื้อ 1 ชิ้น (20 เหรียญ)
+                    </button>
+                    <button id="btn-buy-food-5" class="flex-1 sm:flex-none bg-emerald-700 hover:bg-emerald-600 active:scale-95 text-white font-bold px-3 py-1.5 rounded-lg text-xs transition shadow">
+                        ซื้อ 5 ชิ้น (100 เหรียญ)
+                    </button>
+                </div>
+            </div>
+
+            <div id="bag-pokemon-list" class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Injected via JS -->
+            </div>
+
+            <div class="mt-4 pt-3 border-t border-slate-700 text-center">
+                <p class="text-xs text-slate-400">โปเกมอนจะค่อยๆ โตขึ้นเองตามเวลา หรือใช้ไอเทมอาหารเพื่อเร่งโตทันที! เมื่อเลเวลสูงขึ้น จะขายได้ราคาดีเยี่ยม</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pokéball Shop Modal -->
+    <div id="shop-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" aria-hidden="true">
+        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl p-6 max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl">
+            <div class="flex justify-between items-center mb-3 pb-2 border-b border-slate-700">
+                <h2 class="text-xl font-bold text-white flex items-center gap-2">
+                    🏪 ร้านค้าโปเกบอล
+                </h2>
+                <button id="btn-close-shop" class="text-slate-400 hover:text-white font-bold text-lg p-1">✕</button>
+            </div>
+
+            <!-- Current Coins Display in Shop -->
+            <div class="flex items-center justify-between bg-slate-900/80 px-4 py-2.5 rounded-xl border border-slate-700 mb-3">
+                <span class="text-slate-300 text-sm">เหรียญคงเหลือของคุณ:</span>
+                <span class="text-amber-400 font-bold text-lg flex items-center gap-1">
+                    🪙 <span id="shop-player-coins">100</span> เหรียญ
+                </span>
+            </div>
+
+            <!-- Shop Items List -->
+            <div class="flex-1 overflow-y-auto space-y-3 pr-1">
+                <!-- Copper Ball Card -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-orange-500 shadow-inner flex-shrink-0"></div>
+                            <div>
+                                <h4 class="font-bold text-orange-400 text-sm">บอลทองแดง (Copper Ball)</h4>
+                                <p class="text-xs text-slate-400">อัตราจับ 42% (ลดลงตามเลเวล) · เหมาะกับ Lv 1-30</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-slate-300">มีอยู่: <span id="shop-count-copper" class="font-bold text-orange-400">6</span></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
+                        <button onclick="buyBall('copper', 1, 15)" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center">
+                            1 ลูก (15🪙)
+                        </button>
+                        <button onclick="buyBall('copper', 5, 65)" class="bg-amber-600/90 hover:bg-amber-500 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
+                            5 ลูก (65🪙)
+                        </button>
+                        <button onclick="buyBall('copper', 10, 120)" class="bg-amber-700 hover:bg-amber-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
+                            10 ลูก (120🪙)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Silver Ball Card -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-slate-300 shadow-inner flex-shrink-0"></div>
+                            <div>
+                                <h4 class="font-bold text-slate-200 text-sm">บอลเงิน (Silver Ball)</h4>
+                                <p class="text-xs text-slate-400">อัตราจับ 65% · ประสิทธิภาพปานกลาง เหมาะกับ Lv 30-70</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-slate-300">มีอยู่: <span id="shop-count-silver" class="font-bold text-white">2</span></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
+                        <button onclick="buyBall('silver', 1, 40)" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center">
+                            1 ลูก (40🪙)
+                        </button>
+                        <button onclick="buyBall('silver', 3, 110)" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
+                            3 ลูก (110🪙)
+                        </button>
+                        <button onclick="buyBall('silver', 5, 175)" class="bg-slate-500 hover:bg-slate-400 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
+                            5 ลูก (175🪙)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Gold Ball Card -->
+                <div class="bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2.5">
+                            <div class="w-7 h-7 rounded-full bg-yellow-400 shadow-inner flex-shrink-0"></div>
+                            <div>
+                                <h4 class="font-bold text-yellow-400 text-sm">บอลทองคำ (Gold Ball)</h4>
+                                <p class="text-xs text-slate-400">อัตราจับ 85% · ประสิทธิภาพสูงสุด จับยากหรือหายาก</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-slate-300">มีอยู่: <span id="shop-count-gold" class="font-bold text-yellow-400">1</span></span>
+                    </div>
+                    <div class="grid grid-cols-3 gap-2 pt-1 border-t border-slate-800">
+                        <button onclick="buyBall('gold', 1, 100)" class="bg-slate-800 hover:bg-slate-700 border border-slate-600 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center">
+                            1 ลูก (100🪙)
+                        </button>
+                        <button onclick="buyBall('gold', 3, 270)" class="bg-yellow-600 hover:bg-yellow-500 text-white font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
+                            3 ลูก (270🪙)
+                        </button>
+                        <button onclick="buyBall('gold', 5, 420)" class="bg-yellow-500 hover:bg-yellow-400 text-slate-900 font-bold py-1.5 px-1 rounded-lg text-xs transition active:scale-95 text-center shadow">
+                            5 ลูก (420🪙)
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-3 pt-2.5 border-t border-slate-700 text-center">
+                <p class="text-xs text-slate-400">⚠️ คำเตือน: โปเกมอนเลเวลสูงจับยากขึ้น และมีโอกาสหนีหายไปหากดิ้นหลุด ควรเตรียมบอลชั้นดีไว้เสมอ!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Custom Modal for Alerts -->
+    <div id="custom-modal" class="fixed inset-0 bg-black/80 hidden z-50 flex items-center justify-center p-4" aria-hidden="true">
+        <div class="bg-slate-800 border-2 border-slate-600 rounded-2xl p-6 md:p-8 max-w-sm w-full text-center shadow-2xl" id="modal-content">
+            <div id="modal-icon" class="mb-4 flex justify-center">
+                <!-- Icon injected via JS -->
+            </div>
+            <h2 id="modal-title" class="text-2xl font-bold text-white mb-2">Title</h2>
+            <p id="modal-desc" class="text-slate-300 mb-6">Description</p>
+            <button id="btn-modal-close" class="bg-slate-600 hover:bg-slate-500 text-white font-bold py-3 px-8 rounded-xl w-full text-lg">
+                ตกลง
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // Game State
+        const state = {
+            coins: 100,
+            foodCount: 3,
+            inventory: { copper: 6, silver: 2, gold: 1 },
+            caughtCount: 0,
+            bag: [], // Array of caught pokemon objects
+            currentPokemon: null,
+            isCaught: false
+        };
+
+        const POKEMON_DATABASE = [
+            { name: "คัตเตอร์ปี (Caterpie)", iconSvg: '<path d="M8 9a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm8 0a1 1 0 0 1-1-1V6a1 1 0 0 1 2 0v2a1 1 0 0 1-1 1zm-4-3a5.006 5.006 0 0 0-4.9 4H5a1 1 0 0 0 0 2h1.27a4.975 4.975 0 0 0 0 2H5a1 1 0 0 0 0 2h2.2a5 5 0 0 0 9.6 0H19a1 1 0 0 0 0-2h-1.27a4.975 4.975 0 0 0 0-2H19a1 1 0 0 0 0-2h-1.1A5.006 5.006 0 0 0 12 6zm0 10a3 3 0 1 1 3-3 3 3 0 0 1-3 3z"/>', color: "text-lime-500" },
+            { name: "พิกาจู (Pikachu)", iconSvg: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 15h-2v-2h2zm0-4h-2V7h2z"/>', color: "text-yellow-400" },
+            { name: "ชาแมนเดอร์ (Charmander)", iconSvg: '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-6h2zm0-8h-2V7h2z"/>', color: "text-orange-500" },
+            { name: "สเคอร์เทิล (Squirtle)", iconSvg: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm0 18a8 8 0 1 1 8-8 8 8 0 0 1-8 8z"/>', color: "text-blue-400" },
+            { name: "ดราโกไนต์ (Dragonite)", iconSvg: '<path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>', color: "text-amber-500" },
+            { name: "มิวทู (Mewtwo)", iconSvg: '<path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm1 14h-2v-4h2zm0-6h-2V7h2z"/>', color: "text-purple-400" }
+        ];
+
+        const LOCATIONS = [
+            "ระเบียงบ้าน: เกาะอยู่บนกระถางต้นไม้ริมระเบียง",
+            "ห้องรับแขก: หลบอยู่ใต้โซฟาตัวใหญ่",
+            "ห้องครัว: เกาะอยู่ใกล้ตู้เย็น",
+            "สวนหน้าบ้าน: อยู่บนพุ่มไม้ดอกไม้ประดับ",
+            "ดาดฟ้าตึก: รับลมชมวิวอยู่บนแท็งก์น้ำ"
+        ];
+
+        const DOM = {
+            countCopper: document.getElementById('count-copper'),
+            countSilver: document.getElementById('count-silver'),
+            countGold: document.getElementById('count-gold'),
+            catchCount: document.getElementById('catch-count'),
+            playerCoins: document.getElementById('player-coins'),
+            foodCount: document.getElementById('food-count'),
+            bagCount: document.getElementById('bag-count'),
+            
+            radioCopper: document.getElementById('ball-copper'),
+            radioSilver: document.getElementById('ball-silver'),
+            radioGold: document.getElementById('ball-gold'),
+
+            btnPlaySound: document.getElementById('btn-play-sound'),
+            btnReadTTS: document.getElementById('btn-read-tts'),
+            btnThrowBall: document.getElementById('btn-throw-ball'),
+            btnSearchAnother: document.getElementById('btn-search-another'),
+            btnOpenBag: document.getElementById('btn-open-bag'),
+            btnCloseBag: document.getElementById('btn-close-bag'),
+            btnBuyFood: document.getElementById('btn-buy-food'),
+            btnBuyFood5: document.getElementById('btn-buy-food-5'),
+            
+            shopModal: document.getElementById('shop-modal'),
+            btnOpenShop: document.getElementById('btn-open-shop'),
+            btnCloseShop: document.getElementById('btn-close-shop'),
+            btnQuickShop: document.getElementById('btn-quick-shop'),
+
+            modal: document.getElementById('custom-modal'),
+            modalContent: document.getElementById('modal-content'),
+            modalIcon: document.getElementById('modal-icon'),
+            modalTitle: document.getElementById('modal-title'),
+            modalDesc: document.getElementById('modal-desc'),
+            btnModalClose: document.getElementById('btn-modal-close'),
+
+            bagModal: document.getElementById('bag-modal'),
+            bagPokemonList: document.getElementById('bag-pokemon-list'),
+            
+            ttsMessageBlock: document.getElementById('tts-system-message'),
+            pokemonTitle: document.getElementById('pokemon-title'),
+            pokemonLocation: document.getElementById('pokemon-location'),
+            pokemonLevelBadge: document.getElementById('pokemon-level-badge'),
+            pokemonSvg: document.getElementById('pokemon-svg'),
+            encounterStatusBadge: document.getElementById('encounter-status-badge')
+        };
+
+        let audioCtx;
+
+        function speak(text) {
+            if ('speechSynthesis' in window) {
+                window.speechSynthesis.cancel();
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'th-TH';
+                utterance.rate = 0.9;
+                window.speechSynthesis.speak(utterance);
+            }
+        }
+
+        function initAudio() {
+            if (!audioCtx) {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AudioContext();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        function play3DBeep(panValue, pitchValue) {
+            initAudio();
+            const osc = audioCtx.createOscillator();
+            const panner = audioCtx.createStereoPanner();
+            const gainNode = audioCtx.createGain();
+
+            osc.type = 'sine';
+            osc.frequency.value = pitchValue;
+            panner.pan.value = panValue;
+
+            gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.5, audioCtx.currentTime + 0.05);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.3);
+
+            osc.connect(panner);
+            panner.connect(gainNode);
+            gainNode.connect(audioCtx.destination);
+
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.35);
+        }
+
+        function generateRandomPokemon() {
+            const template = POKEMON_DATABASE[Math.floor(Math.random() * POKEMON_DATABASE.length)];
+            const location = LOCATIONS[Math.floor(Math.random() * LOCATIONS.length)];
+            
+            // Level distribution: 1-60 common, 61-90 uncommon, 91-100 rare
+            let level = 1;
+            const rand = Math.random() * 100;
+            if (rand < 60) level = Math.floor(Math.random() * 30) + 1;
+            else if (rand < 85) level = Math.floor(Math.random() * 30) + 31;
+            else if (rand < 95) level = Math.floor(Math.random() * 20) + 61;
+            else level = Math.floor(Math.random() * 20) + 81;
+
+            state.currentPokemon = {
+                id: Date.now() + Math.random(),
+                name: template.name,
+                level: level,
+                locationText: location,
+                iconSvg: template.iconSvg,
+                color: template.color,
+                audio: { pan: (Math.random() * 1.6) - 0.8, pitch: 200 + (level * 5) },
+                introText: `พบ ${template.name} ! โปเกมอนเลเวล ${level} สถานที่: ${location}`
+            };
+            state.isCaught = false;
+
+            updateEncounterUI();
+            speak(state.currentPokemon.introText);
+        }
+
+        function updateEncounterUI() {
+            const p = state.currentPokemon;
+            DOM.pokemonTitle.textContent = p.name;
+            DOM.pokemonLocation.textContent = `พบที่ ${p.locationText}`;
+            DOM.pokemonLevelBadge.textContent = `เลเวล: ${p.level}`;
+            DOM.pokemonSvg.innerHTML = p.iconSvg;
+            DOM.pokemonSvg.className = `h-14 w-14 ${p.color}`;
+            DOM.ttsMessageBlock.textContent = p.introText;
+            DOM.encounterStatusBadge.textContent = "พบแล้ว!";
+            DOM.encounterStatusBadge.className = "absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-emerald-600 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap";
+            DOM.btnThrowBall.disabled = false;
+        }
+
+        function updateShopUI() {
+            const elCoins = document.getElementById('shop-player-coins');
+            const elCopper = document.getElementById('shop-count-copper');
+            const elSilver = document.getElementById('shop-count-silver');
+            const elGold = document.getElementById('shop-count-gold');
+            if (elCoins) elCoins.textContent = state.coins;
+            if (elCopper) elCopper.textContent = state.inventory.copper;
+            if (elSilver) elSilver.textContent = state.inventory.silver;
+            if (elGold) elGold.textContent = state.inventory.gold;
+        }
+
+        function openShop() {
+            updateShopUI();
+            DOM.shopModal.classList.remove('hidden');
+            DOM.shopModal.setAttribute('aria-hidden', 'false');
+            speak(`ยินดีต้อนรับสู่ร้านค้าโปเกบอล คุณมี ${state.coins} เหรียญ`);
+        }
+
+        function closeShop() {
+            DOM.shopModal.classList.add('hidden');
+            DOM.shopModal.setAttribute('aria-hidden', 'true');
+        }
+
+        function buyBall(type, amount, cost) {
+            const ballNames = {
+                copper: 'บอลทองแดง',
+                silver: 'บอลเงิน',
+                gold: 'บอลทองคำ'
+            };
+            const name = ballNames[type] || type;
+
+            if (state.coins < cost) {
+                const msg = `เหรียญไม่พอซื้อ ${name}! ต้องการ ${cost} เหรียญ แต่คุณมี ${state.coins} เหรียญ (สามารถหาเหรียญเพิ่มได้โดยการขายโปเกมอนในคลัง)`;
+                showModal('error', 'เหรียญไม่พอ!', msg);
+                speak(`เหรียญไม่พอซื้อ ${name} ครับ ต้องการ ${cost} เหรียญ`);
+                return;
+            }
+
+            state.coins -= cost;
+            state.inventory[type] += amount;
+            
+            speak(`ซื้อ ${name} จำนวน ${amount} ลูก สำเร็จ จ่าย ${cost} เหรียญ`);
+            updateInventoryUI();
+            updateShopUI();
+        }
+
+        function updateInventoryUI() {
+            DOM.countCopper.textContent = `x${state.inventory.copper}`;
+            DOM.countSilver.textContent = `x${state.inventory.silver}`;
+            DOM.countGold.textContent = `x${state.inventory.gold}`;
+            DOM.catchCount.textContent = `จับได้สะสม: ${state.caughtCount} ตัว`;
+            DOM.playerCoins.textContent = state.coins;
+            DOM.foodCount.textContent = state.foodCount;
+            DOM.bagCount.textContent = state.bag.length;
+
+            if (state.inventory.copper <= 0) DOM.radioCopper.disabled = true;
+            else DOM.radioCopper.disabled = false;
+
+            if (state.inventory.silver <= 0) DOM.radioSilver.disabled = true;
+            else DOM.radioSilver.disabled = false;
+
+            if (state.inventory.gold <= 0) DOM.radioGold.disabled = true;
+            else DOM.radioGold.disabled = false;
+            
+            const selected = document.querySelector('input[name="ball_type"]:checked');
+            if (selected && selected.disabled) {
+                if (!DOM.radioCopper.disabled) DOM.radioCopper.checked = true;
+                else if (!DOM.radioSilver.disabled) DOM.radioSilver.checked = true;
+                else if (!DOM.radioGold.disabled) DOM.radioGold.checked = true;
+            }
+
+            updateShopUI();
+        }
+
+        function showModal(type, title, desc) {
+            DOM.modalTitle.textContent = title;
+            DOM.modalDesc.textContent = desc;
+            
+            if (type === 'success') {
+                DOM.modalIcon.innerHTML = `<div class="w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center"><svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg></div>`;
+                DOM.modalTitle.className = "text-2xl font-bold text-emerald-400 mb-2";
+            } else {
+                DOM.modalIcon.innerHTML = `<div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center"><svg class="w-8 h-8 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></div>`;
+                DOM.modalTitle.className = "text-2xl font-bold text-red-400 mb-2";
+            }
+
+            DOM.modal.classList.remove('hidden');
+            DOM.modalContent.classList.add('modal-animate');
+            DOM.modal.setAttribute('aria-hidden', 'false');
+            DOM.btnModalClose.onclick = hideModal;
+            DOM.btnModalClose.focus();
+        }
+
+        function hideModal() {
+            DOM.modal.classList.add('hidden');
+            DOM.modalContent.classList.remove('modal-animate');
+            DOM.modal.setAttribute('aria-hidden', 'true');
+        }
+
+        function attemptCatch() {
+            if (state.isCaught) {
+                speak("ตัวนี้ถูกจับไปแล้ว กรุณาหาตัวใหม่ครับ");
+                return;
+            }
+
+            const totalBalls = state.inventory.copper + state.inventory.silver + state.inventory.gold;
+            if (totalBalls <= 0) {
+                const msg = "คุณไม่มีลูกบอลเหลืออยู่เลย! กรุณาเปิดร้านค้าเพื่อซื้อบอลเพิ่มด้วยเหรียญ";
+                showModal('error', 'บอลหมดเกลี้ยง!', msg);
+                speak("คุณไม่มีลูกบอลเหลืออยู่เลยครับ กรุณาเปิดร้านค้าเพื่อซื้อบอล");
+                DOM.btnModalClose.onclick = () => {
+                    hideModal();
+                    openShop();
+                };
+                return;
+            }
+
+            const selectedBall = document.querySelector('input[name="ball_type"]:checked');
+            if (!selectedBall) {
+                const msg = "กรุณาเลือกชนิดลูกบอลที่ต้องการขว้าง";
+                showModal('error', 'ยังไม่ได้เลือกบอล!', msg);
+                speak(msg);
+                return;
+            }
+
+            const ballType = selectedBall.value;
+            const ballNameTh = ballType === 'copper' ? 'บอลทองแดง' : (ballType === 'silver' ? 'บอลเงิน' : 'บอลทองคำ');
+            if (state.inventory[ballType] <= 0) {
+                const msg = `${ballNameTh} หมดแล้ว! กรุณาเลือกบอลชนิดอื่น หรือเปิดร้านค้าเพื่อซื้อเพิ่ม`;
+                showModal('error', `${ballNameTh} หมด!`, msg);
+                speak(`${ballNameTh} หมดแล้วครับ กรุณาซื้อเพิ่ม`);
+                DOM.btnModalClose.onclick = () => {
+                    hideModal();
+                    openShop();
+                };
+                return;
+            }
+
+            // Deduct Ball
+            state.inventory[ballType]--;
+            updateInventoryUI();
+
+            DOM.btnThrowBall.disabled = true;
+            DOM.btnThrowBall.innerHTML = `<svg class="animate-spin h-5 w-5 text-white inline mr-2" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path></svg> กำลังลุ้น...`;
+
+            setTimeout(() => {
+                DOM.btnThrowBall.disabled = false;
+                DOM.btnThrowBall.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-yellow-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><circle cx="12" cy="12" r="10" stroke-width="2"></circle><circle cx="12" cy="12" r="4" stroke-width="2"></circle></svg> ขว้างบอลจับ!`;
+
+                // Harder & more challenging catch formula:
+                // Copper: 42% base, 0.48 penalty per level, min 5%
+                // Silver: 65% base, 0.35 penalty per level, min 15%
+                // Gold: 85% base, 0.20 penalty per level, min 25%
+                let baseChance = 42;
+                let penaltyRate = 0.48;
+                let minChance = 5;
+
+                if (ballType === 'silver') {
+                    baseChance = 65;
+                    penaltyRate = 0.35;
+                    minChance = 15;
+                } else if (ballType === 'gold') {
+                    baseChance = 85;
+                    penaltyRate = 0.20;
+                    minChance = 25;
+                }
+
+                const levelPenalty = (state.currentPokemon.level - 1) * penaltyRate;
+                const catchChance = Math.max(minChance, Math.round(baseChance - levelPenalty));
+
+                const roll = Math.random() * 100;
+                
+                if (roll <= catchChance) {
+                    // SUCCESS
+                    state.isCaught = true;
+                    state.caughtCount++;
+                    
+                    // Add to Bag
+                    state.bag.push({
+                        ...state.currentPokemon,
+                        growth: 0, // 0 to 100%
+                        caughtAt: Date.now()
+                    });
+
+                    updateInventoryUI();
+                    
+                    DOM.ttsMessageBlock.textContent = `จับสำเร็จแล้ว! คุณใช้ ${ballNameTh} จับ ${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} เข้าคลังสำเร็จ!`;
+                    DOM.encounterStatusBadge.textContent = "จับแล้วในคลัง!";
+                    DOM.encounterStatusBadge.className = "absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap";
+
+                    const title = "จับสำเร็จ!";
+                    const desc = `ยอดเยี่ยม! คุณใช้${ballNameTh}จับ ${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} สำเร็จเรียบร้อย! ไปที่คลังเพื่อเลี้ยงหรือขายได้เลย`;
+                    
+                    showModal('success', title, desc);
+                    speak(desc);
+                    
+                    DOM.btnModalClose.onclick = () => {
+                        hideModal();
+                        generateRandomPokemon(); // Automatically spawn next
+                    };
+                } else {
+                    // FAIL - Chance to flee scales with level: 12% + (level * 0.25)%
+                    const fleeChance = 12 + (state.currentPokemon.level * 0.25);
+                    const didFlee = (Math.random() * 100) < fleeChance;
+
+                    if (didFlee) {
+                        DOM.ttsMessageBlock.textContent = `แย่แล้ว! ${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} ดิ้นหลุดและวิ่งหนีหายไปแล้ว!`;
+                        DOM.encounterStatusBadge.textContent = "หนีไปแล้ว!";
+                        DOM.encounterStatusBadge.className = "absolute -bottom-3 left-1/2 transform -translate-x-1/2 bg-rose-700 text-white text-xs font-bold px-3 py-0.5 rounded-full border-2 border-slate-900 z-25 whitespace-nowrap";
+
+                        const title = "โปเกมอนหนีไปแล้ว!";
+                        const desc = `${state.currentPokemon.name} เลเวล ${state.currentPokemon.level} ตกใจและวิ่งหนีหายไปเข้าป่าแล้ว! (ควรเตรียมบอลระดับสูงไว้เพื่อเพิ่มโอกาสจับสำเร็จ)`;
+
+                        showModal('error', title, desc);
+                        speak(`${state.currentPokemon.name} หนีไปแล้วครับ กำลังค้นหาตัวใหม่`);
+
+                        DOM.btnModalClose.onclick = () => {
+                            hideModal();
+                            generateRandomPokemon();
+                        };
+                    } else {
+                        DOM.ttsMessageBlock.textContent = `พลาดเป้า! โปเกมอนเลเวล ${state.currentPokemon.level} ดิ้นหลุดจาก${ballNameTh} โอกาสจับรอบนี้คือ ${catchChance}% ลองขว้างใหม่อีกครั้ง`;
+
+                        const title = "ดิ้นหลุดออกมาได้!";
+                        const desc = `โปเกมอนเลเวล ${state.currentPokemon.level} แข็งแกร่งมาก ดิ้นหลุดจาก${ballNameTh} (โอกาสจับ ${catchChance}%)! ลองเลือกบอลที่ดีขึ้นหรือลองใหม่อีกครั้ง`;
+
+                        showModal('error', title, desc);
+                        speak(desc);
+
+                        DOM.btnModalClose.onclick = () => {
+                            hideModal();
+                            DOM.btnThrowBall.focus();
+                        };
+                    }
+                }
+            }, 1200);
+        }
+
+        const FOOD_PRICE = 20;
+
+        function getPokemonSellPrice(poke) {
+            const growthBonus = (poke.growth || 0) / 100;
+            return Math.floor((10 + poke.level * 10) * (1 + growthBonus));
+        }
+
+        function buyFood(amount = 1) {
+            const totalCost = FOOD_PRICE * amount;
+            if (state.coins < totalCost) {
+                const msg = `เหรียญไม่พอซื้ออาหาร! ต้องการ ${totalCost} เหรียญ แต่คุณมี ${state.coins} เหรียญ`;
+                showModal('error', 'เหรียญไม่พอ!', msg);
+                speak(`เหรียญไม่พอซื้ออาหารครับ ต้องการ ${totalCost} เหรียญ`);
+                return;
+            }
+            state.coins -= totalCost;
+            state.foodCount += amount;
+            speak(`ซื้ออาหารสำเร็จ ${amount} ชิ้น เสีย ${totalCost} เหรียญ`);
+            updateInventoryUI();
+            renderBagList();
+        }
+
+        function renderBagList() {
+            DOM.bagPokemonList.innerHTML = '';
+            if (state.bag.length === 0) {
+                DOM.bagPokemonList.innerHTML = `<p class="text-center text-slate-400 py-6">คลังยังว่างเปล่า ออกไปจับโปเกมอนกันเลย!</p>`;
+                return;
+            }
+
+            state.bag.forEach((poke, index) => {
+                const card = document.createElement('div');
+                card.className = "bg-slate-900 border border-slate-700 rounded-xl p-3 flex flex-col gap-2";
+                
+                const sellPrice = getPokemonSellPrice(poke);
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-center">
+                        <div class="flex items-center gap-2">
+                            <span class="text-xl">${poke.name.split(' ')[0]}</span>
+                            <div>
+                                <h4 class="font-bold text-white text-sm">${poke.name}</h4>
+                                <span class="text-xs text-purple-300">เลเวล ${poke.level}</span>
+                            </div>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button data-index="${index}" class="feed-btn bg-amber-600 hover:bg-amber-500 active:scale-95 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition">
+                                🍖 ให้อาหาร (${state.foodCount})
+                            </button>
+                            <button data-index="${index}" class="sell-btn bg-rose-600 hover:bg-rose-500 active:scale-95 text-white text-xs font-bold px-2.5 py-1.5 rounded-lg transition">
+                                💰 ขาย (${sellPrice} เหรียญ)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="w-full bg-slate-800 rounded-full h-2 overflow-hidden border border-slate-700">
+                        <div class="bg-emerald-500 h-full transition-all duration-300" style="width: ${poke.growth}%"></div>
+                    </div>
+                    <div class="flex justify-between text-[11px] text-slate-400">
+                        <span>ความเติบโต: ${Math.floor(poke.growth)}%</span>
+                        <span>มูลค่าปัจจุบัน: ${sellPrice} เหรียญ</span>
+                    </div>
+                `;
+                DOM.bagPokemonList.appendChild(card);
+            });
+
+            // Bind feed/sell actions
+            document.querySelectorAll('.feed-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    const idx = parseInt(e.target.getAttribute('data-index'));
+                    feedPokemon(idx);
+                };
+            });
+
+            document.querySelectorAll('.sell-btn').forEach(btn => {
+                btn.onclick = (e) => {
+                    const idx = parseInt(e.target.getAttribute('data-index'));
+                    sellPokemon(idx);
+                };
+            });
+        }
+
+        function feedPokemon(index) {
+            if (state.foodCount <= 0) {
+                showModal('error', 'อาหารหมด!', 'อาหารเร่งโตหมดแล้ว กรุณากดซื้ออาหารด้านบน');
+                speak("อาหารหมดแล้ว! กรุณาซื้ออาหารเพิ่ม");
+                return;
+            }
+            state.foodCount--;
+            state.bag[index].growth = Math.min(100, state.bag[index].growth + 25);
+            if (state.bag[index].growth >= 100) {
+                state.bag[index].growth = 0;
+                state.bag[index].level += 1;
+                speak(`ยินดีด้วย! ${state.bag[index].name} เลเวลอัพเป็น ${state.bag[index].level} แล้ว!`);
+            } else {
+                speak("ให้อาหารสำเร็จ โตไวขึ้น!");
+            }
+            updateInventoryUI();
+            renderBagList();
+        }
+
+        function sellPokemon(index) {
+            const poke = state.bag[index];
+            const price = getPokemonSellPrice(poke);
+            state.coins += price;
+            state.bag.splice(index, 1);
+            speak(`ขาย ${poke.name} เรียบร้อย ได้รับ ${price} เหรียญ`);
+            updateInventoryUI();
+            renderBagList();
+        }
+
+        // Background passive growth timer (slow growth over time)
+        setInterval(() => {
+            if (state.bag.length > 0) {
+                state.bag.forEach(poke => {
+                    if (poke.growth < 100) {
+                        poke.growth = Math.min(100, poke.growth + 0.5);
+                    }
+                });
+                if (!DOM.bagModal.classList.contains('hidden')) {
+                    renderBagList();
+                }
+            }
+        }, 3000);
+
+        // Event Listeners
+        DOM.btnPlaySound.addEventListener('click', () => {
+            if (state.currentPokemon) {
+                play3DBeep(state.currentPokemon.audio.pan, state.currentPokemon.audio.pitch);
+                speak("เสียงทิศทางโปเกมอน");
+            }
+        });
+
+        DOM.btnReadTTS.addEventListener('click', () => {
+            if (state.currentPokemon) {
+                speak(state.currentPokemon.introText);
+            }
+        });
+
+        DOM.btnThrowBall.addEventListener('click', attemptCatch);
+
+        DOM.btnSearchAnother.addEventListener('click', () => {
+            speak("กำลังหาตัวใหม่...");
+            generateRandomPokemon();
+        });
+
+        DOM.btnOpenBag.addEventListener('click', () => {
+            renderBagList();
+            DOM.bagModal.classList.remove('hidden');
+            DOM.bagModal.setAttribute('aria-hidden', 'false');
+        });
+
+        DOM.btnCloseBag.addEventListener('click', () => {
+            DOM.bagModal.classList.add('hidden');
+            DOM.bagModal.setAttribute('aria-hidden', 'true');
+        });
+
+        DOM.btnBuyFood.addEventListener('click', () => buyFood(1));
+        if (DOM.btnBuyFood5) {
+            DOM.btnBuyFood5.addEventListener('click', () => buyFood(5));
+        }
+
+        if (DOM.btnOpenShop) DOM.btnOpenShop.addEventListener('click', openShop);
+        if (DOM.btnCloseShop) DOM.btnCloseShop.addEventListener('click', closeShop);
+        if (DOM.btnQuickShop) DOM.btnQuickShop.addEventListener('click', openShop);
+
+        DOM.btnModalClose.onclick = hideModal;
+
+        window.onload = () => {
+            updateInventoryUI();
+            generateRandomPokemon();
+        };
+    </script>
+</body>
+</html>
